@@ -1,0 +1,555 @@
+/* Letternoxd */
+
+/* Tuning knobs for the fades (set live in the demo). */
+:root {
+  --lbni-fade: 0.2; /* same as Letterboxd's own "Fade watched films" */
+  --lbni-tint: 0.8; /* strength of the single coloured fade */
+  --lbni-tint-seen: 3, 27, 14; /* dark green */
+  --lbni-tint-loved: 36, 17, 0; /* dark orange */
+  --lbni-tint-watchlist: 4, 20, 34; /* dark blue */
+}
+
+/* ---- filtering ---- */
+.lbni-hidden {
+  display: none !important;
+}
+/* Fade: exactly like Letterboxd's own "Fade watched films" — the poster drops
+   to 20% opacity until hovered. The centred ⃠ stays at full strength. */
+.lbni-faded > :not([class*="lbni-"]) {
+  transition: opacity 0.2s ease;
+}
+.lbni-faded:is(:not(:hover), .lbni-pinned):not(:has(:focus-visible)) > :not([class*="lbni-"]) {
+  opacity: var(--lbni-fade);
+}
+
+/* ---- buttons on posters ---- */
+.lbni-host {
+  position: relative;
+}
+.lbni-corner {
+  all: unset;
+  box-sizing: border-box;
+  position: absolute;
+  top: 5px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  border-radius: 50%;
+  background: rgba(20, 24, 28, 0.82);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  color: #def;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+}
+.lbni-corner svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.lbni-btn-ni {
+  right: 5px;
+}
+.lbni-btn-wl,
+.lbni-btn-more {
+  left: 5px;
+}
+.lbni-btn-more {
+  display: none;
+}
+.lbni-host:hover > .lbni-corner,
+.lbni-corner:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.lbni-corner:hover {
+  background: rgba(20, 24, 28, 0.95);
+  color: #fff;
+}
+.lbni-corner:focus-visible {
+  outline: 2px solid #40bcf4;
+  outline-offset: 1px;
+}
+
+/* Hover layout on grid posters: "…" top-left, watchlist inside Letterboxd's
+   hover bar where its "…" was (that one is hidden; ours opens it). */
+.lbni-swap > .lbni-btn-more {
+  display: flex;
+}
+.lbni-swap .overlay-actions .menu-link {
+  visibility: hidden;
+}
+.lbni-host.lbni-swap > .lbni-btn-wl {
+  z-index: 25;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #fff; /* as white as Letterboxd's eye and heart */
+}
+/* clock circle 14px, about the height of Letterboxd's heart */
+.lbni-host.lbni-swap > .lbni-btn-wl svg {
+  flex: none;
+  width: 17.3px;
+  height: 17.3px;
+}
+.lbni-host.lbni-swap > .lbni-btn-wl:hover {
+  background: none;
+  color: #fff;
+}
+
+/* Small posters (~70px wide). */
+.lbni-small > .lbni-corner,
+.lbni-small > .lbni-badges > .lbni-badge {
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+}
+.lbni-small > .lbni-corner {
+  top: 3px;
+}
+.lbni-small > .lbni-btn-ni {
+  right: 3px;
+}
+.lbni-small > .lbni-btn-wl,
+.lbni-small > .lbni-btn-more,
+.lbni-small > .lbni-badges {
+  left: 3px;
+}
+.lbni-small > .lbni-badges {
+  top: 3px;
+  gap: 3px;
+}
+
+/* The big poster at the top of a film page. */
+.lbni-large > .lbni-corner {
+  top: 8px;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+}
+.lbni-large > .lbni-btn-ni {
+  right: 8px;
+}
+.lbni-large > .lbni-btn-wl {
+  left: 8px;
+}
+/* No Letterboxd hover bar there, so its watchlist button stays top-left and
+   is always shown when the film is on your watchlist. */
+.lbni-large > .lbni-btn-wl.lbni-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* States */
+/* Not interested: when marked, the ⃠ stays in the top-right corner (white);
+   unmarked films show a grey ⃠ there on hover. */
+.lbni-btn-ni.lbni-on {
+  color: #a54142; /* the red from the icon */
+  opacity: 1;
+  pointer-events: auto;
+}
+.lbni-btn-ni:not(.lbni-on) {
+  color: #fff;
+}
+.lbni-btn-wl.lbni-on,
+.lbni-swap > .lbni-btn-wl.lbni-on {
+  color: #40bcf4;
+}
+.lbni-btn-wl .lbni-minus,
+.lbni-btn-wl.lbni-on .lbni-plus {
+  display: none;
+}
+.lbni-btn-wl.lbni-on .lbni-minus {
+  display: inline;
+}
+/* ⃠ is unclickable while a film is watched, loved or on your watchlist. */
+.lbni-btn-ni.lbni-blocked,
+.lbni-btn-ni.lbni-blocked:hover {
+  color: #7d8c9b; /* greyed out, but still visible */
+  cursor: not-allowed;
+}
+.lbni-panel-ni.lbni-blocked,
+.lbni-panel-ni.lbni-blocked:hover,
+.lbni-row4 .lbni-inrow.lbni-blocked,
+.lbni-row4 .lbni-inrow.lbni-blocked:hover {
+  opacity: 0.35;
+  cursor: not-allowed;
+  color: inherit;
+}
+.lbni-row4 .lbni-inrow.lbni-blocked .lbni-panel-icon {
+  color: #91a3ac;
+}
+.lbni-busy {
+  cursor: progress;
+  opacity: 0.6 !important;
+}
+
+/* ---- status overlays ---- */
+/* Washes cover the poster only (posters are 2:3 and sit at the top of their cell). */
+.lbni-ind,
+.lbni-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  /* exactly Letterboxd's own poster corners */
+  border-radius: clamp(2px, 2.66667%, 8px) / clamp(2px, 1.77778%, 8px);
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.lbni-ind {
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Coloured fades: watched → dark green, liked → dark orange, watchlist →
+   dark blue. One layer straight toward the tint (never dimmed first and
+   tinted after), badges kept bright. Hovering clears it. */
+li.lbni-tinted {
+  opacity: 1 !important;
+  --opacity: 1 !important;
+}
+li.lbni-tinted > :not([class*="lbni-"]) {
+  opacity: 1 !important;
+}
+.lbni-ind[data-kind="seen"] {
+  background: rgba(var(--lbni-tint-seen), var(--lbni-tint));
+}
+.lbni-ind[data-kind="loved"] {
+  background: rgba(var(--lbni-tint-loved), var(--lbni-tint));
+}
+.lbni-ind[data-kind="watchlist"] {
+  background: rgba(var(--lbni-tint-watchlist), var(--lbni-tint));
+}
+/* Just clicked: keep the fade showing even under the pointer. */
+li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
+  opacity: 1;
+}
+/* Not interested: centred ⃠. Show mode adds a light grey wash; Fade mode
+   relies on the 20% fade above. */
+.lbni-ind[data-kind="ni"] {
+  background: rgba(20, 24, 28, 0.25);
+  color: #fff;
+}
+.lbni-ind[data-kind="ni"][data-strength="strong"] {
+  background: none;
+}
+
+/* Badges, top-left: heart / eye, then the watchlist clock. Same circles and
+   placement as the corner buttons. */
+.lbni-badges {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  z-index: 16;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.lbni-badge {
+  box-sizing: border-box;
+  display: flex;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  border-radius: 50%;
+  background: rgba(20, 24, 28, 0.82);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.lbni-badge svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.lbni-badge-seen {
+  color: #00e054;
+}
+.lbni-badge-loved {
+  color: #ff8000;
+}
+/* Watchlist while faded: grey circle, blue clock, like the other badges. */
+.lbni-badge-watchlist-faded {
+  color: #40bcf4;
+}
+/* Watchlist: a solid blue disc with a dark clock. It's shrunk by the 2px
+   border on every side (same centre), so it keeps the same breathing room
+   from the border that the grey badges have from the poster edge, and its
+   clock sits exactly where the eye / heart glyphs do. */
+.lbni-badges > .lbni-badge-watchlist {
+  width: 24px;
+  height: 24px;
+  padding: 3px;
+  margin: 2px;
+  background: #40bcf4;
+  color: #14181c;
+}
+.lbni-small > .lbni-badges > .lbni-badge-watchlist {
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  margin: 2px;
+}
+
+/* Rating pill: takes the place of the "…" button on hover (same size and
+   spot; clicking it opens the same menu). A rating also rests under the
+   badges when not hovered. */
+.lbni-rate {
+  all: unset;
+  box-sizing: border-box;
+  position: absolute;
+  left: 5px;
+  top: calc(5px + var(--lbni-rate-slot, 0) * 32px);
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  padding: 0 8px 0 6px;
+  border-radius: 999px;
+  background: rgba(20, 24, 28, 0.82);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font: 600 12px/1 -apple-system, BlinkMacSystemFont, Graphik, sans-serif;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: top 0.12s ease, opacity 0.12s ease, background-color 0.12s ease;
+}
+.lbni-rate svg {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+.lbni-rate-empty {
+  color: #def;
+  font-weight: 500;
+}
+.lbni-rate.lbni-rate-resting {
+  opacity: 1;
+}
+.lbni-host:is(:hover, :has(:focus-visible)) > .lbni-rate {
+  top: 5px;
+  opacity: 1;
+  pointer-events: auto;
+}
+.lbni-rate:hover {
+  background: rgba(20, 24, 28, 0.95);
+}
+.lbni-rate:focus-visible {
+  outline: 2px solid #40bcf4;
+  outline-offset: 1px;
+}
+.lbni-host.lbni-has-rate > .lbni-btn-more {
+  display: none !important;
+}
+.lbni-small > .lbni-rate {
+  left: 3px;
+  top: calc(3px + var(--lbni-rate-slot, 0) * 25px);
+  height: 22px;
+  padding: 0 6px 0 4px;
+  gap: 1px;
+  font-size: 10px;
+}
+.lbni-small > .lbni-rate svg {
+  width: 10px;
+  height: 10px;
+}
+.lbni-small.lbni-host:is(:hover, :has(:focus-visible)) > .lbni-rate {
+  top: 3px;
+}
+
+/* Watchlist: a crisp blue border inside the poster plus a soft inner glow
+   (inside, so it's never clipped at grid edges or bleeds into neighbours). */
+.lbni-ring {
+  z-index: 14;
+  box-shadow: inset 0 0 0 2px #40bcf4, inset 0 0 10px rgba(64, 188, 244, 0.3);
+}
+/* Hovering a poster clears the overlay so the normal controls are visible. */
+.lbni-host:is(:hover, :has(:focus-visible)) > .lbni-ind,
+.lbni-host:is(:hover, :has(:focus-visible)) > .lbni-ring,
+.lbni-host:is(:hover, :has(:focus-visible)) > .lbni-badges {
+  opacity: 0;
+}
+
+/* ---- film page: row in the sidebar actions panel ---- */
+.lbni-panel-row {
+  border-top: 1px solid #456;
+  text-align: center;
+}
+.lbni-panel-ni {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  color: #9ab;
+  font-size: 13px;
+  text-decoration: none;
+}
+.lbni-panel-ni:hover {
+  color: #fff;
+}
+.lbni-panel-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+.lbni-panel-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.lbni-panel-ni.lbni-on,
+.lbni-panel-ni.lbni-on:hover {
+  color: #a54142;
+}
+
+/* In-row version: Watch / Like / Watchlist / Not interested as four equal
+   columns, with Letterboxd's icons scaled to 80% so all four fit. */
+#userpanel li.actions-row1.lbni-row4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.lbni-row4 > * {
+  width: auto !important;
+  min-width: 0;
+}
+.lbni-row4 .action {
+  font-size: 12px;
+}
+.lbni-row4 .action::before {
+  margin: 0 auto 3px !important;
+  zoom: 0.8;
+}
+.lbni-row-item {
+  border: 0;
+}
+.lbni-row4 .lbni-inrow {
+  flex-direction: column;
+  gap: 3px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 14px;
+  color: inherit;
+}
+.lbni-row4 .lbni-inrow:hover {
+  color: #fff;
+}
+.lbni-row4 .lbni-inrow.lbni-on,
+.lbni-row4 .lbni-inrow.lbni-on:hover {
+  color: #a54142;
+}
+/* Same box as Letterboxd's icons at 80% (40x32), same glyph grey. */
+.lbni-row4 .lbni-inrow .lbni-panel-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: #91a3ac;
+}
+.lbni-row4 .lbni-inrow:hover .lbni-panel-icon {
+  color: #bcd;
+}
+.lbni-row4 .lbni-inrow.lbni-on .lbni-panel-icon {
+  color: #a54142;
+}
+
+/* ---- filter menu: one row per filter (Show · Fade · Hide · Only) ---- */
+.lbni-compact li.js-film-filter,
+.lbni-compact li.js-account-filters:has(> .js-fade-toggle) {
+  display: none !important;
+}
+#hide-toggle-menu.lbni-compact {
+  min-width: 332px;
+}
+.lbni-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 24px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #2c3440;
+}
+.lbni-row-label {
+  flex: 0 0 104px;
+  white-space: nowrap;
+}
+.lbni-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.lbni-seg > button {
+  all: unset;
+  box-sizing: border-box;
+  min-width: 38px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 14px;
+  color: #2c3440;
+  cursor: pointer;
+}
+.lbni-seg > button:hover {
+  color: #fff;
+}
+.lbni-seg > button[aria-checked="true"] {
+  background: #2c3440;
+  color: #fff;
+  cursor: default;
+}
+.lbni-seg > button:focus-visible {
+  outline: 2px solid #40bcf4;
+  outline-offset: 1px;
+}
+
+/* ---- note under the grid ---- */
+.lbni-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #789;
+}
+.lbni-note a {
+  color: #9ab;
+  text-decoration: underline;
+}
+
+/* ---- toast (errors, or when Letterboxd's own message bar isn't available) ---- */
+.lbni-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  max-width: min(520px, 90vw);
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #2c3440;
+  color: #def;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Graphik", sans-serif;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  z-index: 100000;
+  transition: opacity 0.4s ease;
+}
+.lbni-toast-error {
+  background: #5a1e1e;
+  color: #fdd;
+}
+.lbni-toast-out {
+  opacity: 0;
+}

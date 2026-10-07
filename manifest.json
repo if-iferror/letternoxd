@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Letternoxd — Not Interested for Letterboxd",
+  "short_name": "Letternoxd",
+  "version": "1.2.1",
+  "description": "Unofficial. Adds a Not interested filter, status badges and a one-click watchlist button to Letterboxd.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://letterboxd.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}
