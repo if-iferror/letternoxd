@@ -96,7 +96,7 @@
   box-shadow: none;
   opacity: 1;
   pointer-events: auto;
-  color: #fff; /* as white as Letterboxd's eye and heart */
+  color: #eef3f8; /* Letterboxd's resting icon colour (eye, heart, "…") */
   transition: none;
 }
 /* clock circle 14px, about the height of Letterboxd's heart */
@@ -105,15 +105,22 @@
   width: 17.3px;
   height: 17.3px;
 }
-/* Same hover as Letterboxd's eye and heart: light blue-grey when off,
-   unchanged when on. */
-.overlay-actions > .lbni-btn-wl:hover {
+/* Same feedback as Letterboxd's eye and heart: light blue-grey on hover and
+   while pressed when off; unchanged when on (like a watched eye or a liked
+   heart). No extra "saving" fade after a click, which they don't have. */
+.overlay-actions > .lbni-btn-wl:hover,
+.overlay-actions > .lbni-btn-wl:active {
   background: none;
   color: #c9d8e8;
 }
 .overlay-actions > .lbni-btn-wl.lbni-on,
-.overlay-actions > .lbni-btn-wl.lbni-on:hover {
+.overlay-actions > .lbni-btn-wl.lbni-on:hover,
+.overlay-actions > .lbni-btn-wl.lbni-on:active {
   color: #40bcf4;
+}
+.overlay-actions > .lbni-btn-wl.lbni-busy {
+  opacity: 1 !important;
+  cursor: pointer;
 }
 /* Small posters (~70px wide). */
 .lbni-small > .lbni-corner,
