@@ -1218,8 +1218,8 @@
   }
 
   // ================================================================ feedback & coffee bar
-  // A small tab on the right edge, just under Letterboxd's header. It opens
-  // a bar with a feedback box and a "Buy me a coffee" link. It pops open on
+  // A small tab hanging from the top of the window (top right). It drops down
+  // a full-width bar with a feedback box and a "Buy me a coffee" link. It pops open on
   // its own now and then (at most once a week, never in the first few days);
   // the × stops that for good, but the tab always stays.
   const BAR_KEY = `${NS}:bar`;
