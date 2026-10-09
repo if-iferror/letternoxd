@@ -1,0 +1,424 @@
+/* ---- Letternøxd Video Store (prototype) ---- */
+
+html.lbs-open {
+  overflow: hidden;
+}
+
+.lbs-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147482000;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #14181c;
+  color: #9ab;
+  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
+}
+.lbs-root[hidden] {
+  display: none;
+}
+.lbs-root button {
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Top bar */
+.lbs-top {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: rgba(20, 24, 28, 0.96);
+  border-bottom: 1px solid #2c3440;
+  backdrop-filter: blur(6px);
+}
+.lbs-top-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  max-width: 1240px;
+  height: 56px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+.lbs-brand {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.lbs-brand span {
+  color: #40bcf4;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-left: 4px;
+}
+.lbs-wings {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.lbs-wing {
+  all: unset;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 3px;
+  color: #9ab;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lbs-wing span {
+  color: #678;
+  font-size: 11px;
+  font-weight: 400;
+}
+.lbs-wing:hover {
+  color: #def;
+}
+.lbs-wing.-on {
+  background: #2c3440;
+  color: #fff;
+}
+.lbs-wing.-on span {
+  color: #9ab;
+}
+.lbs-wing.-soon {
+  cursor: default;
+  color: #567;
+}
+.lbs-wing.-soon:hover {
+  color: #567;
+}
+.lbs-wing em {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #456;
+  border: 1px solid #2c3440;
+  border-radius: 2px;
+  padding: 1px 4px;
+}
+.lbs-close {
+  all: unset;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #9ab;
+  cursor: pointer;
+}
+.lbs-close:hover {
+  background: #2c3440;
+  color: #fff;
+}
+.lbs-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* The aisle */
+.lbs-aisle {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 36px 24px 80px;
+  box-sizing: border-box;
+}
+.lbs-sign {
+  margin-bottom: 28px;
+}
+.lbs-sign h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.lbs-sign p {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: #789;
+}
+
+/* Loading */
+.lbs-loading p {
+  max-width: 520px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.lbs-meter {
+  width: 320px;
+  max-width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: #2c3440;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.lbs-meter i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #40bcf4;
+  transition: width 0.3s;
+}
+.lbs-retry,
+.lbs-foot button {
+  all: unset;
+  color: #40bcf4;
+  cursor: pointer;
+}
+.lbs-retry:hover,
+.lbs-foot button:hover {
+  color: #fff;
+}
+
+/* A shelf */
+.lbs-shelf {
+  margin: 0 0 40px;
+}
+.lbs-label {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #2c3440;
+}
+.lbs-label h2 {
+  margin: 0;
+  color: #def;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.lbs-count {
+  font-size: 12px;
+  color: #678;
+}
+.lbs-all {
+  all: unset;
+  margin-left: auto;
+  font-size: 12px;
+  color: #9ab;
+  cursor: pointer;
+}
+.lbs-all:hover {
+  color: #fff;
+}
+
+.lbs-rack {
+  position: relative;
+}
+.lbs-row {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.lbs-row::-webkit-scrollbar {
+  display: none;
+}
+.lbs-item {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+/* Posters: Letterboxd's own .poster/.frame styles do the frame and hover. */
+.lbs-poster {
+  position: relative;
+  width: 116px;
+  height: 174px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #2c3440;
+}
+.lbs-poster .image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lbs-poster .frame {
+  position: absolute;
+  inset: 0;
+}
+.lbs-item:not(.lbs-loaded) .image {
+  opacity: 0.35;
+}
+.lbs-item .image {
+  transition: opacity 0.25s;
+}
+
+/* The ledge the posters stand on */
+.lbs-ledge {
+  height: 10px;
+  margin-top: 0;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(#2c3440, #1c2228);
+  box-shadow: 0 1px 0 #384350 inset, 0 8px 14px -6px rgba(0, 0, 0, 0.7);
+}
+
+/* Front display: bigger boxes */
+.lbs-shelf.-front .lbs-poster {
+  width: 150px;
+  height: 225px;
+}
+.lbs-shelf.-front .lbs-label h2 {
+  color: #40bcf4;
+}
+
+/* Scroll arrows */
+.lbs-nudge {
+  all: unset;
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  border-radius: 50%;
+  background: rgba(20, 24, 28, 0.88);
+  box-shadow: 0 0 0 1px #456, 0 4px 12px rgba(0, 0, 0, 0.6);
+  color: #def;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.lbs-nudge[hidden] {
+  display: none;
+}
+.lbs-nudge svg {
+  width: 18px;
+  height: 18px;
+}
+.lbs-nudge.-left {
+  left: -14px;
+}
+.lbs-nudge.-right {
+  right: -14px;
+}
+.lbs-rack:hover .lbs-nudge {
+  opacity: 1;
+}
+.lbs-nudge:hover {
+  background: #2c3440;
+  color: #fff;
+}
+
+/* See all: the shelf opens into a grid */
+.lbs-shelf.-grid .lbs-row {
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: 16px;
+}
+.lbs-shelf.-grid .lbs-ledge {
+  display: none;
+}
+.lbs-more {
+  margin-top: 18px;
+  text-align: center;
+}
+.lbs-more button {
+  all: unset;
+  padding: 8px 16px;
+  border-radius: 3px;
+  background: #2c3440;
+  color: #def;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lbs-more button:hover {
+  background: #456;
+  color: #fff;
+}
+.lbs-more span {
+  color: #9ab;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.lbs-foot {
+  margin-top: 48px;
+  font-size: 12px;
+  color: #567;
+}
+
+/* Home page strip */
+.lbs-home {
+  margin: 0 0 28px;
+}
+.lbs-home-door {
+  display: grid;
+  gap: 4px;
+  padding: 18px 22px;
+  border-radius: 4px;
+  background: linear-gradient(100deg, #1c2228 0%, #202a33 100%);
+  box-shadow: 0 0 0 1px #2c3440 inset;
+  text-decoration: none !important;
+}
+.lbs-home-door:hover {
+  box-shadow: 0 0 0 1px #40bcf4 inset;
+}
+.lbs-home-kicker {
+  color: #40bcf4;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.lbs-home-title {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+.lbs-home-sub {
+  color: #9ab;
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .lbs-top-inner {
+    gap: 10px;
+    padding: 0 12px;
+  }
+  .lbs-brand span,
+  .lbs-wing span,
+  .lbs-wing em {
+    display: none;
+  }
+  .lbs-aisle {
+    padding: 24px 16px 60px;
+  }
+  .lbs-sign h1 {
+    font-size: 32px;
+  }
+  .lbs-poster {
+    width: 96px;
+    height: 144px;
+  }
+  .lbs-shelf.-front .lbs-poster {
+    width: 120px;
+    height: 180px;
+  }
+}
