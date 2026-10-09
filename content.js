@@ -75,6 +75,9 @@
   const RATING_LOOKS = ["plain", "star", "half", "instar", "stardark", "starcolor"];
   const IN_STAR = ["instar", "stardark", "starcolor"];
   if (!RATING_LOOKS.includes(prefs.ratingLook)) prefs.ratingLook = "half";
+  // A ring around the rating, filled clockwise from 12 o'clock in proportion
+  // to the rating (5 = full circle). Only for the round looks (3.5 / 3½).
+  if (typeof prefs.ratingRing !== "boolean") prefs.ratingRing = true;
   const savePrefs = () => writeJSON(PREFS_KEY, prefs);
 
   let USER = null; // set once the page is ready
@@ -576,7 +579,11 @@
       const text = `<span class="${NS}-num">${ratingLabel(rating, look)}</span>`;
       const inStar = IN_STAR.includes(look);
       const extra = look === "star" || inStar ? ICON_STAR_SOLID : "";
-      return `<span class="${NS}-badge ${NS}-badge-num ${NS}-look-${look}${inStar ? ` ${NS}-instar` : ""} ${NS}-badge-${tone}">${extra}${text}</span>`;
+      const arc = prefs.ratingRing && (look === "plain" || look === "half");
+      return (
+        `<span class="${NS}-badge ${NS}-badge-num ${NS}-look-${look}${inStar ? ` ${NS}-instar` : ""}${arc ? ` ${NS}-arc` : ""} ${NS}-badge-${tone}"` +
+        `${arc ? ` style="--lbni-p:${Math.min(1, rating / 5)}"` : ""}>${extra}${text}</span>`
+      );
     }
     if (type === "star") return `<span class="${NS}-badge ${NS}-badge-star ${NS}-badge-${tone}">${ICON_STAR}</span>`;
     return `<span class="${NS}-badge ${NS}-badge-${k}">${BADGE_ICON[k]}</span>`;
@@ -662,7 +669,7 @@
         wrap.setAttribute("aria-hidden", "true");
         item.append(wrap);
       }
-      const key = badges.join(",") + "|" + ratingText + "|" + prefs.ratingLook;
+      const key = badges.join(",") + "|" + ratingText + "|" + prefs.ratingLook + "|" + prefs.ratingRing;
       if (wrap.dataset.key !== key) {
         wrap.dataset.key = key;
         wrap.innerHTML = badges.map(badgeHTML(st.rating)).join("");
@@ -1344,6 +1351,15 @@
           saveBar();
           toast("Coffee bar reset: it will pop open on the next page.");
         }
+      },
+    },
+    {
+      label: "Ring",
+      options: [["on", "On"], ["off", "Off"]],
+      get: () => (prefs.ratingRing ? "on" : "off"),
+      set: (v) => {
+        prefs.ratingRing = v === "on";
+        savePrefs();
       },
     },
     {

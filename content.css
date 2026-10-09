@@ -952,3 +952,37 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-large.lbni-host:is(:hover, :has(:focus-visible)) > .lbni-rate {
   top: 8px;
 }
+
+/* ---- Rating ring: an arc around the rating, rating/5 of the way round ---- */
+/* Filled clockwise from 12 o'clock in the badge colour, over a faint track
+   so a short arc reads as part of a whole. The badge stays a circle. */
+.lbni-badges > .lbni-badge-num.lbni-arc {
+  --lbni-arc-w: 2px;
+  position: relative;
+  width: 28px;
+  min-width: 0;
+  padding: 0;
+  border-radius: 50%;
+}
+.lbni-badges > .lbni-badge-num.lbni-arc::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(currentColor calc(var(--lbni-p, 0) * 360deg), rgba(221, 238, 255, 0.16) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--lbni-arc-w)), #000 calc(100% - var(--lbni-arc-w) + 0.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--lbni-arc-w)), #000 calc(100% - var(--lbni-arc-w) + 0.5px));
+}
+.lbni-badges > .lbni-badge-num.lbni-arc > .lbni-num {
+  position: relative;
+}
+.lbni-small > .lbni-badges > .lbni-badge-num.lbni-arc {
+  --lbni-arc-w: 1.6px;
+  width: 22px;
+  padding: 0;
+}
+.lbni-large > .lbni-badges > .lbni-badge-num.lbni-arc {
+  --lbni-arc-w: 3px;
+  width: 40px;
+  padding: 0;
+}
