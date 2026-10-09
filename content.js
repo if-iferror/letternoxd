@@ -68,6 +68,10 @@
     prefs.indicators = style !== "none";
     savePrefs();
   };
+  // How a rating number looks in the "ratings" style: "plain" (3.5),
+  // "star" (★3.5), "half" (3½) or "instar" (the number inside a star).
+  const RATING_LOOKS = ["plain", "star", "half", "instar"];
+  if (!RATING_LOOKS.includes(prefs.ratingLook)) prefs.ratingLook = "plain";
   const savePrefs = () => writeJSON(PREFS_KEY, prefs);
 
   let USER = null; // set once the page is ready
@@ -537,11 +541,26 @@
     '<path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.8l-5.4 3 1.2-6.1-4.5-4.2 6.1-.7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'
   );
   const BADGE_ICON = { loved: ICON_HEART, seen: ICON_EYE, watchlist: ICON_CLOCK, "watchlist-faded": ICON_CLOCK };
+  const ICON_STAR_SOLID = svg(
+    "0 0 24 24",
+    '<path d="M12 2.6l2.8 6 6.6.8-4.9 4.5 1.3 6.5L12 17.2l-5.8 3.2 1.3-6.5-4.9-4.5 6.6-.8z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>'
+  );
+  // A rating as text, in the chosen look: 3.5 / 3½.
+  const ratingLabel = (rating, look) => {
+    if (!(rating > 0)) return "";
+    if (look === "half") return rating % 1 ? `${Math.floor(rating) || ""}½` : String(rating);
+    return String(rating % 1 ? rating.toFixed(1) : rating);
+  };
   // One badge's markup. "num-seen" / "num-loved" show the rating number;
   // "star-seen" / "star-loved" an outlined star; the rest an icon.
-  const badgeHTML = (ratingText) => (k) => {
+  const badgeHTML = (rating) => (k) => {
     const [type, tone] = k.split("-");
-    if (type === "num") return `<span class="${NS}-badge ${NS}-badge-num ${NS}-badge-${tone}">${ratingText}</span>`;
+    if (type === "num") {
+      const look = prefs.ratingLook;
+      const text = `<span class="${NS}-num">${ratingLabel(rating, look)}</span>`;
+      const extra = look === "star" || look === "instar" ? ICON_STAR_SOLID : "";
+      return `<span class="${NS}-badge ${NS}-badge-num ${NS}-look-${look} ${NS}-badge-${tone}">${extra}${text}</span>`;
+    }
     if (type === "star") return `<span class="${NS}-badge ${NS}-badge-star ${NS}-badge-${tone}">${ICON_STAR}</span>`;
     return `<span class="${NS}-badge ${NS}-badge-${k}">${BADGE_ICON[k]}</span>`;
   };
@@ -627,10 +646,10 @@
         wrap.setAttribute("aria-hidden", "true");
         item.append(wrap);
       }
-      const key = badges.join(",") + "|" + ratingText;
+      const key = badges.join(",") + "|" + ratingText + "|" + prefs.ratingLook;
       if (wrap.dataset.key !== key) {
         wrap.dataset.key = key;
-        wrap.innerHTML = badges.map(badgeHTML(ratingText)).join("");
+        wrap.innerHTML = badges.map(badgeHTML(st.rating)).join("");
       }
     } else wrap?.remove();
 
@@ -1198,6 +1217,15 @@
       options: [["current", "Current"], ["ratings", "Ratings"], ["none", "None"]],
       get: () => prefs.badgeStyle,
       set: (v) => setBadgeStyle(v),
+    },
+    {
+      label: "Rating look",
+      options: [["plain", "3.5"], ["star", "★3.5"], ["half", "3½"], ["instar", "In star"]],
+      get: () => prefs.ratingLook,
+      set: (v) => {
+        prefs.ratingLook = v;
+        savePrefs();
+      },
     },
   ];
   let togglesEl = null;
