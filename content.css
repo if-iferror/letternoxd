@@ -99,9 +99,14 @@
   color: #eef3f8; /* Letterboxd's resting icon colour (eye, heart, "…") */
   transition: none;
 }
-/* clock circle 14px, about the height of Letterboxd's heart */
+/* Clock sized to match Letterboxd's eye and heart, which are drawn larger in
+   its standard bar than in the small (-w70) one. */
 .overlay-actions > .lbni-btn-wl svg {
   flex: none;
+  width: 19.5px;
+  height: 19.5px;
+}
+.overlay-actions.-w70 > .lbni-btn-wl svg {
   width: 17.3px;
   height: 17.3px;
 }
@@ -157,12 +162,6 @@
 }
 .lbni-large > .lbni-btn-wl {
   left: 8px;
-}
-/* No Letterboxd hover bar there, so its watchlist button stays top-left and
-   is always shown when the film is on your watchlist. */
-.lbni-large > .lbni-btn-wl.lbni-on {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 /* States */
@@ -896,4 +895,60 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   .lbni-bar-coffee span {
     display: none;
   }
+}
+
+/* ---- Large posters (film page): everything scales with the 40px corners ---- */
+/* Letterboxd's hover bar stays 28px tall at every poster size; grow it (and
+   the icons inside, including our clock) to match the corner buttons. */
+.lbni-large .overlay-actions {
+  transform: scale(1.4286); /* 40px / 28px */
+  transform-origin: 50% 100%;
+}
+.lbni-large > .lbni-badges {
+  top: 8px;
+  left: 8px;
+  gap: 6px;
+}
+.lbni-large > .lbni-badges > .lbni-badge {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+}
+.lbni-large > .lbni-badges > .lbni-badge-watchlist {
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  margin: 2px;
+}
+.lbni-large > .lbni-badges > .lbni-badge-num {
+  width: auto;
+  min-width: 40px;
+  padding: 0 11px;
+  font-size: 17px;
+}
+.lbni-large > .lbni-badges > .lbni-badge-star {
+  padding: 9px;
+}
+.lbni-large > .lbni-badges > .lbni-instar {
+  width: 48px;
+  min-width: 0;
+  height: 48px;
+  margin: -4px 0 -4px -4px;
+  padding: 4px 0 0;
+  font-size: 13.5px;
+}
+.lbni-large > .lbni-rate {
+  left: 8px;
+  top: calc(8px + var(--lbni-rate-slot, 0) * 46px);
+  gap: 3px;
+  height: 40px;
+  padding: 0 12px 0 9px;
+  font-size: 17px;
+}
+.lbni-large > .lbni-rate svg {
+  width: 17px;
+  height: 17px;
+}
+.lbni-large.lbni-host:is(:hover, :has(:focus-visible)) > .lbni-rate {
+  top: 8px;
 }

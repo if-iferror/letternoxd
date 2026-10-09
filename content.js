@@ -385,15 +385,23 @@
 
   const POSTER_SELECTOR = "[data-component-class='LazyPoster'], .film-poster[data-film-slug]";
   const GRID_ITEM_SELECTOR = "li.posteritem, li.griditem, li.poster-container, li.film-detail, li.listitem";
+  // Other snug wrappers around a single poster: review tiles, reviews lists,
+  // the poster on a review page, the previous / next film links.
+  const LOOSE_HOST_SELECTOR =
+    "div.viewing-poster-container, article.viewing-poster-container, section.viewing-poster-container, div.film-prevnext";
 
-  // Grid cells only; overlapping poster stacks (list previews) are left alone.
+  // Grid cells (and similar); overlapping poster stacks (list previews), the
+  // poster pop-up and tiny thumbnails (the diary's 35px ones) are left alone.
   const gridItemOf = (poster) => {
-    const item = poster.closest(GRID_ITEM_SELECTOR);
+    if (poster.closest(".modal")) return null;
+    const w = Number(poster.getAttribute("data-image-width"));
+    if (w && w < 60) return null;
+    const item = poster.closest(GRID_ITEM_SELECTOR) || poster.closest(LOOSE_HOST_SELECTOR);
     return item && !item.closest(".-overlapped, .poster-list-overlapped, .poster-list-link") ? item : null;
   };
-  // Corner buttons also go on the big poster at the top of a film page.
-  const buttonHostOf = (poster) =>
-    gridItemOf(poster) || (!poster.closest(".modal") && poster.closest("section.poster-list.-single")) || null;
+  // The big poster at the top of a film page.
+  const singleHostOf = (poster) => (!poster.closest(".modal") && poster.closest("section.poster-list.-single")) || null;
+  const buttonHostOf = (poster) => gridItemOf(poster) || singleHostOf(poster);
 
   // Per-pass page facts (computed once per update instead of once per poster).
   const page = { filterMenu: false, ourList: false, watchedFade: false };
@@ -576,17 +584,16 @@
 
   // ================================================================ applying state to a poster
   function applyTo(poster) {
-    const item = gridItemOf(poster);
+    const grid = gridItemOf(poster);
+    const item = grid || singleHostOf(poster);
     const film = filmIdentity(poster);
-    if (!item) {
-      // Big film-page poster: just keep its ⃠ in step.
-      return;
-    }
+    if (!item) return;
     const st = statusOf(poster, film);
     if (noteBlock(film.lid, st) && isNotInterested(film)) autoUndo(film);
 
     const marked = isNotInterested(film);
-    const filtering = page.filterMenu && !page.ourList;
+    // The big film-page poster gets badges and buttons but is never filtered.
+    const filtering = !!grid && page.filterMenu && !page.ourList;
     const active = marked && filtering; // a not-interested film being filtered
     const F = prefs.filters;
     const byStatus = (mode, has) => (mode === "hide" && has) || (mode === "only" && !has);
@@ -803,7 +810,8 @@
     item.append(wl, ni);
     item._lbniWl = wl; // it may move into Letterboxd's hover bar (see swapIntoBar)
 
-    if (gridItemOf(poster)) {
+    {
+      // "…": shown on hover once Letterboxd's hover bar is there (see swapIntoBar).
       const more = document.createElement("button");
       more.type = "button";
       more.className = `${NS}-corner ${NS}-btn-more`;
@@ -1264,7 +1272,7 @@
       `<div class="${NS}-bar-body">` +
       `<button type="button" class="${NS}-bar-collapse" title="Hide" aria-label="Hide">${svg("0 0 24 24", '<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>')}</button>` +
       `<form class="${NS}-bar-form"><input class="${NS}-bar-input" type="text" maxlength="2000" autocomplete="off" ` +
-      `placeholder="Feedback? Suggestions? Insults? Type here and hit enter." aria-label="Send feedback about Letternoxd"></form>` +
+      `placeholder="Feedback? Suggestions? Insults? Type here and hit enter!" aria-label="Send feedback about Letternoxd"></form>` +
       `<span class="${NS}-bar-spacer"></span>` +
       `<span class="${NS}-bar-enjoy">Enjoying letternøxd?</span>` +
       `<a class="${NS}-bar-coffee" href="${COFFEE_URL}" target="_blank" rel="noopener noreferrer">${ICON_CUP}<span>Buy me a coffee</span></a>` +
