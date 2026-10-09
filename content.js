@@ -548,20 +548,15 @@
     '<path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.8l-5.4 3 1.2-6.1-4.5-4.2 6.1-.7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'
   );
   const BADGE_ICON = { loved: ICON_HEART, seen: ICON_EYE, watchlist: ICON_CLOCK, "watchlist-faded": ICON_CLOCK };
-  const ICON_STAR_SOLID = svg(
-    "0 0 24 24",
-    '<path d="M12 2.6l2.8 6 6.6.8-4.9 4.5 1.3 6.5L12 17.2l-5.8 3.2 1.3-6.5-4.9-4.5 6.6-.8z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>'
-  );
   // A rating as badge text: 4 or 3.5.
   const ratingLabel = (rating) => (rating > 0 ? String(rating % 1 ? rating.toFixed(1) : rating) : "");
   // One badge's markup. "num-seen" / "num-loved" show the rating number;
   // "star-seen" / "star-loved" an outlined star; the rest an icon.
   const badgeHTML = (rating) => (k) => {
     const [type, tone] = k.split("-");
-    // A small star in the badge colour (green = seen, orange = liked), then the
-    // rating in white.
+    // A small white outlined star, then the rating in white.
     if (type === "num")
-      return `<span class="${NS}-badge ${NS}-badge-num ${NS}-badge-${tone}">${ICON_STAR_SOLID}<span class="${NS}-num">${ratingLabel(rating)}</span></span>`;
+      return `<span class="${NS}-badge ${NS}-badge-num ${NS}-badge-${tone}">${ICON_STAR}<span class="${NS}-num">${ratingLabel(rating)}</span></span>`;
     if (type === "star") return `<span class="${NS}-badge ${NS}-badge-star ${NS}-badge-${tone}">${ICON_STAR}</span>`;
     return `<span class="${NS}-badge ${NS}-badge-${k}">${BADGE_ICON[k]}</span>`;
   };

@@ -584,8 +584,8 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
-/* The rating is white; its star (and the seen-but-unrated star) carries the
-   colour: green = seen, orange = liked. */
+/* Rating badges are white (outlined star + number). The seen-but-unrated
+   star badge is coloured: green = seen, orange = liked. */
 .lbni-badge-num.lbni-badge-seen,
 .lbni-badge-star.lbni-badge-seen {
   color: #00e054;
@@ -596,8 +596,9 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 }
 .lbni-badges > .lbni-badge-num svg {
   flex: none;
-  width: 0.85em;
-  height: 0.85em;
+  width: 0.9em;
+  height: 0.9em;
+  color: #fff;
 }
 .lbni-badge-num > .lbni-num {
   color: #fff;
