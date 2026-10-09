@@ -23,5 +23,16 @@
       "run_at": "document_start",
       "world": "MAIN"
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "letternoxd@if-iferror",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  }
 }

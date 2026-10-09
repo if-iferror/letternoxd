@@ -28,7 +28,11 @@ Letternoxd collects nothing. It only talks to letterboxd.com, as you, and keeps 
 
 **From the Chrome Web Store** (Chrome, Arc, Brave, Edge): *link coming soon*.
 
-**From this repository:**
+**From Firefox Add-ons** (Firefox 128 or later): *link coming soon*.
+
+The same files work in both browsers.
+
+**From this repository, in Chrome, Arc, Brave or Edge:**
 
 1. Download this repository (green **Code** button → **Download ZIP**) and unzip it somewhere permanent.
 2. Go to `chrome://extensions` (Arc: `arc://extensions`, Brave: `brave://extensions`, Edge: `edge://extensions`).
@@ -36,6 +40,15 @@ Letternoxd collects nothing. It only talks to letterboxd.com, as you, and keeps 
 4. Reload any open Letterboxd tabs.
 
 To update, replace the files, click ↻ on the extension's card, and reload Letterboxd.
+
+**From this repository, in Firefox:**
+
+1. Download and unzip this repository as above.
+2. Go to `about:debugging#/runtime/this-firefox` and click **Load Temporary Add-on…**.
+3. Choose the `manifest.json` file inside the unzipped folder.
+4. Reload any open Letterboxd tabs.
+
+Firefox removes temporary add-ons when it restarts, so for everyday use install it from Firefox Add-ons instead.
 
 ## Good to know
 
