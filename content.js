@@ -565,8 +565,8 @@
     if (look === "half" || look === "stardark" || look === "starcolor") {
       if (!(rating % 1)) return String(rating);
       const whole = Math.floor(rating);
-      // A hair of space between the whole number and the ½.
-      return whole ? `${whole}<span class="${NS}-half">½</span>` : "½";
+      // A hair of space between the whole number and a small, top-aligned .5.
+      return whole ? `${whole}<span class="${NS}-half">.5</span>` : ".5";
     }
     return String(rating % 1 ? rating.toFixed(1) : rating);
   };
@@ -1364,7 +1364,7 @@
     },
     {
       label: "Rating look",
-      options: [["plain", "3.5"], ["star", "★3.5"], ["half", "3½"], ["instar", "In star"], ["stardark", "Dark ★"], ["starcolor", "Color ★"]],
+      options: [["plain", "3.5"], ["star", "★3.5"], ["half", "Small .5"], ["instar", "In star"], ["stardark", "Dark ★"], ["starcolor", "Color ★"]],
       get: () => prefs.ratingLook,
       set: (v) => {
         prefs.ratingLook = v;
