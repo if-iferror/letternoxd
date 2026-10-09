@@ -58,6 +58,16 @@
   delete prefs.fadeLiked;
   delete prefs.fadeWatchlist;
   if (!MODES.includes(prefs.mode)) prefs.mode = "hide";
+  // Badge style: "current" (eye / heart + rating pill), "ratings" (the rating
+  // number itself, green = seen, orange = liked) or "none".
+  const BADGE_STYLES = ["current", "ratings", "none"];
+  if (!BADGE_STYLES.includes(prefs.badgeStyle)) prefs.badgeStyle = prefs.indicators === false ? "none" : "current";
+  const setBadgeStyle = (style) => {
+    if (style !== "none") prefs.lastBadgeStyle = style;
+    prefs.badgeStyle = style;
+    prefs.indicators = style !== "none";
+    savePrefs();
+  };
   const savePrefs = () => writeJSON(PREFS_KEY, prefs);
 
   let USER = null; // set once the page is ready
@@ -527,6 +537,14 @@
     '<path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.8l-5.4 3 1.2-6.1-4.5-4.2 6.1-.7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'
   );
   const BADGE_ICON = { loved: ICON_HEART, seen: ICON_EYE, watchlist: ICON_CLOCK, "watchlist-faded": ICON_CLOCK };
+  // One badge's markup. "num-seen" / "num-loved" show the rating number;
+  // "star-seen" / "star-loved" an outlined star; the rest an icon.
+  const badgeHTML = (ratingText) => (k) => {
+    const [type, tone] = k.split("-");
+    if (type === "num") return `<span class="${NS}-badge ${NS}-badge-num ${NS}-badge-${tone}">${ratingText}</span>`;
+    if (type === "star") return `<span class="${NS}-badge ${NS}-badge-star ${NS}-badge-${tone}">${ICON_STAR}</span>`;
+    return `<span class="${NS}-badge ${NS}-badge-${k}">${BADGE_ICON[k]}</span>`;
+  };
 
   // ================================================================ applying state to a poster
   function applyTo(poster) {
@@ -555,7 +573,8 @@
     // Fade = exactly Letterboxd's "Fade watched films": 20% until hovered.
     item.classList.toggle(`${NS}-faded`, active && prefs.mode === "fade");
 
-    const on = prefs.indicators;
+    const style = prefs.badgeStyle;
+    const on = style !== "none";
     const niShown = active && (prefs.mode === "fade" || prefs.mode === "show");
 
     // Coloured fades (one layer, straight toward a dark tint): watched → green,
@@ -585,14 +604,21 @@
       ind.dataset.strength = kind === "ni" && prefs.mode === "fade" ? "strong" : "soft";
     } else ind?.remove();
 
-    // Badges, top-left: heart / eye, then the watchlist clock.
+    // Badges, top-left.
+    //   current: heart (liked) or eye (seen), then the watchlist clock.
+    //   ratings: your rating number, or an outlined star if seen but unrated,
+    //            orange if liked, green if seen; then the watchlist clock.
     const wlFaded = tint === "watchlist";
     const badges = [];
+    const seen = st.watched || st.liked || st.rating > 0;
     if (!active && on) {
-      if (st.liked) badges.push("loved");
+      if (style === "ratings") {
+        if (seen) badges.push(st.rating > 0 ? `num-${st.liked ? "loved" : "seen"}` : `star-${st.liked ? "loved" : "seen"}`);
+      } else if (st.liked) badges.push("loved");
       else if (st.watched) badges.push("seen");
       if (st.inWatchlist) badges.push(wlFaded ? "watchlist-faded" : "watchlist");
     }
+    const ratingText = st.rating > 0 ? String(st.rating % 1 ? st.rating.toFixed(1) : st.rating) : "";
     let wrap = item.querySelector(`:scope > .${NS}-badges`);
     if (badges.length) {
       if (!wrap) {
@@ -601,10 +627,10 @@
         wrap.setAttribute("aria-hidden", "true");
         item.append(wrap);
       }
-      const key = badges.join(",");
+      const key = badges.join(",") + "|" + ratingText;
       if (wrap.dataset.key !== key) {
         wrap.dataset.key = key;
-        wrap.innerHTML = badges.map((k) => `<span class="${NS}-badge ${NS}-badge-${k}">${BADGE_ICON[k]}</span>`).join("");
+        wrap.innerHTML = badges.map(badgeHTML(ratingText)).join("");
       }
     } else wrap?.remove();
 
@@ -621,8 +647,10 @@
     // Rating pill. It replaces the "…" button (both open the same menu, which
     // is where you rate): "☆ 3.5" if rated, "☆ Rate" if seen but unrated, the
     // plain "…" otherwise. A rating also sits under the badges when not hovered.
-    const rateText = st.rating > 0 ? String(st.rating % 1 ? st.rating.toFixed(1) : st.rating) : st.watched ? "Rate" : "";
-    const showRating = !active && !!rateText;
+    // (Not in the "ratings" style: the badge already shows the rating, and on
+    // hover the corner is just the "…".)
+    const rateText = ratingText || (st.watched ? "Rate" : "");
+    const showRating = !active && !!rateText && style === "current";
     let rate = item.querySelector(`:scope > .${NS}-rate`);
     if (showRating) {
       if (!rate) {
@@ -1054,10 +1082,10 @@
       {
         label: "Status badges",
         options: ["on", "off"],
-        get: () => (prefs.indicators ? "on" : "off"),
+        get: () => (prefs.badgeStyle !== "none" ? "on" : "off"),
         set: (v) => {
-          prefs.indicators = v === "on";
-          savePrefs();
+          setBadgeStyle(v === "on" ? prefs.lastBadgeStyle || "current" : "none");
+          renderToggles();
         },
       },
       "divider",
@@ -1161,6 +1189,64 @@
     });
   }
 
+  // ================================================================ temporary toggles menu
+  // TEMPORARY: a plain floating panel (bottom right) for trying options out.
+  // To be designed properly (or folded into the eye menu) later.
+  const TOGGLES = [
+    {
+      label: "Badges",
+      options: [["current", "Current"], ["ratings", "Ratings"], ["none", "None"]],
+      get: () => prefs.badgeStyle,
+      set: (v) => setBadgeStyle(v),
+    },
+  ];
+  let togglesEl = null;
+  function injectToggles() {
+    if (togglesEl || !document.body) return;
+    togglesEl = document.createElement("div");
+    togglesEl.className = `${NS}-toggles`;
+    togglesEl.innerHTML =
+      `<button type="button" class="${NS}-toggles-open" aria-expanded="false">Letternoxd</button>` +
+      `<div class="${NS}-toggles-panel" hidden>` +
+      TOGGLES.map(
+        (t, i) =>
+          `<div class="${NS}-toggles-row"><span class="${NS}-row-label">${t.label}</span>` +
+          `<span class="${NS}-seg" role="radiogroup" aria-label="${t.label}">` +
+          t.options.map(([v, l]) => `<button type="button" role="radio" data-t="${i}" data-value="${v}">${l}</button>`).join("") +
+          `</span></div>`
+      ).join("") +
+      `</div>`;
+    const open = togglesEl.querySelector(`.${NS}-toggles-open`);
+    const panel = togglesEl.querySelector(`.${NS}-toggles-panel`);
+    togglesEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (e.target.closest(`.${NS}-toggles-open`)) {
+        panel.hidden = !panel.hidden;
+        open.setAttribute("aria-expanded", String(!panel.hidden));
+        return;
+      }
+      const b = e.target.closest("button[data-value]");
+      if (!b) return;
+      TOGGLES[b.dataset.t].set(b.dataset.value);
+      renderToggles();
+      renderMenu();
+      applyAll();
+    });
+    document.addEventListener("click", (e) => {
+      if (!panel.hidden && !togglesEl.contains(e.target)) {
+        panel.hidden = true;
+        open.setAttribute("aria-expanded", "false");
+      }
+    });
+    document.body.append(togglesEl);
+    renderToggles();
+  }
+  function renderToggles() {
+    togglesEl?.querySelectorAll("button[data-value]").forEach((b) => {
+      b.setAttribute("aria-checked", String(TOGGLES[b.dataset.t].get() === b.dataset.value));
+    });
+  }
+
   // ================================================================ "N hidden" note
   function updateHiddenNote() {
     const hidden = document.querySelectorAll(`.${NS}-hidden`);
@@ -1215,7 +1301,7 @@
       }
     });
   }
-  const OWN = `.${NS}-ind, .${NS}-ring, .${NS}-corner, .${NS}-badges, .${NS}-rate, .${NS}-panel-ni, .${NS}-note`;
+  const OWN = `.${NS}-ind, .${NS}-ring, .${NS}-corner, .${NS}-badges, .${NS}-rate, .${NS}-panel-ni, .${NS}-note, .${NS}-toggles`;
 
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
@@ -1308,6 +1394,7 @@
     } else if (e.key === PREFS_KEY) {
       Object.assign(prefs, readJSON(PREFS_KEY, {}));
       renderMenu();
+      renderToggles();
       applyAll();
     }
   });
@@ -1323,6 +1410,7 @@
     // Our Watched row replaces Letterboxd's "Fade watched films" switch.
     if (watchedFadeOn()) setWatchedFade(false);
     injectMenu();
+    injectToggles();
     applyAll();
     observer.observe(document.body, {
       childList: true,
