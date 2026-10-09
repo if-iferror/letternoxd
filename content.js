@@ -1246,11 +1246,11 @@
       `<button type="button" class="${NS}-bar-tab" aria-expanded="false" title="Feedback &amp; coffee">${ICON_MEGAPHONE}</button>` +
       `<div class="${NS}-bar-body">` +
       `<button type="button" class="${NS}-bar-collapse" title="Hide" aria-label="Hide">${svg("0 0 24 24", '<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>')}</button>` +
-      `<form class="${NS}-bar-form"><input class="${NS}-bar-input" type="text" maxlength="2000" autocomplete="off" ` +
-      `placeholder="Feedback? Suggestions? Insults? Type here and hit enter!" aria-label="Send feedback about Letternoxd"></form>` +
-      `<span class="${NS}-bar-spacer"></span>` +
       `<span class="${NS}-bar-enjoy">Enjoying letternøxd?</span>` +
       `<a class="${NS}-bar-coffee" href="${COFFEE_URL}" target="_blank" rel="noopener noreferrer">${ICON_CUP}<span>Buy me a coffee</span></a>` +
+      `<span class="${NS}-bar-spacer"></span>` +
+      `<form class="${NS}-bar-form"><input class="${NS}-bar-input" type="text" maxlength="2000" autocomplete="off" ` +
+      `placeholder="Feedback? Suggestions? Insults? Type here and hit enter!" aria-label="Send feedback about Letternoxd"></form>` +
       `<button type="button" class="${NS}-bar-dismiss" title="Hide, and don't pop open on its own again (the tab stays)" aria-label="Hide and don't pop open again">${svg("0 0 24 24", '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>')}</button>` +
       `</div>`;
 
