@@ -575,14 +575,17 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-badge-num {
   align-items: center;
   justify-content: center;
+  gap: 2px;
   width: auto;
   min-width: 28px;
-  padding: 0 7px;
+  padding: 0 8px 0 6px;
   border-radius: 999px;
   font: 700 12px/1 -apple-system, BlinkMacSystemFont, Graphik, sans-serif;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
+/* The rating is white; its star (and the seen-but-unrated star) carries the
+   colour: green = seen, orange = liked. */
 .lbni-badge-num.lbni-badge-seen,
 .lbni-badge-star.lbni-badge-seen {
   color: #00e054;
@@ -591,13 +594,22 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-badge-star.lbni-badge-loved {
   color: #ff8000;
 }
+.lbni-badges > .lbni-badge-num svg {
+  flex: none;
+  width: 0.85em;
+  height: 0.85em;
+}
+.lbni-badge-num > .lbni-num {
+  color: #fff;
+}
 .lbni-badge-star {
   padding: 6px;
 }
 .lbni-small > .lbni-badges > .lbni-badge-num {
   width: auto;
   min-width: 22px;
-  padding: 0 5px;
+  gap: 1px;
+  padding: 0 6px 0 4px;
   font-size: 10px;
 }
 /* Badges stack in a column; keep pills left-aligned, not stretched. */
@@ -794,7 +806,8 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-large > .lbni-badges > .lbni-badge-num {
   width: auto;
   min-width: 40px;
-  padding: 0 11px;
+  gap: 3px;
+  padding: 0 12px 0 9px;
   font-size: 17px;
 }
 .lbni-large > .lbni-badges > .lbni-badge-star {
