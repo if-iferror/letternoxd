@@ -734,7 +734,7 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 /* 3½: a hair of space before the ½ (the badge text is tightly tracked). */
 .lbni-half {
   margin-left: 0;
-  font-size: 0.82em; /* a touch smaller than the whole number */
+  font-size: 0.68em; /* noticeably smaller than the whole number */
   font-weight: 600; /* semi-bold: a step down from the bold whole number */
   /* Top-aligned with the whole number rather than sitting on its baseline. */
   display: inline-block;
