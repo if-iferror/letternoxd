@@ -1,10 +1,14 @@
 /*
  * Letternoxd Video Store (prototype: the Horror aisle, Main wing).
  *
- * Opens over any Letterboxd page at #store. Every shelf is a Letterboxd
- * browse query sorted by popularity. A film sits on exactly one shelf: the
- * most specific shelf it fits, in SHELF_PRIORITY order; whatever is left goes
- * to "Everything else". Only the Main wing is stocked here: films ranked in
+ * Opens over any Letterboxd page at #store, laid out as one physical aisle:
+ * sections stand side by side (A-Z by name, "Everything Else" last), each with
+ * a laminated sign and several shelves of films filed A-Z by title. Scrolling
+ * walks the aisle, so every shelf moves together.
+ *
+ * Every section is a Letterboxd browse query. A film sits in exactly one
+ * section: the most specific one it fits, in SHELF_PRIORITY order; whatever is
+ * left goes to "Everything Else". The end cap (popular this week) may repeat. Only the Main wing is stocked here: films ranked in
  * the top 9,360 of Horror by popularity (about 1,000+ watches).
  *
  * The stock list is built once (about 230 small page reads) and kept for a
@@ -47,8 +51,6 @@
   const SHELF_PRIORITY = ["giallo", "jhorror", "vampires", "zombies", "madsci", "extreme", "creature", "slashers", "gothic", "haunted", "creepy", "eighties", "comedy"];
   const EVERYTHING = { id: "rest", name: "Everything Else", q: "genre/horror" };
 
-  const ROW_LIMIT = 60; // posters in a closed shelf
-  const GRID_STEP = 120; // posters added per "Show more" in an open shelf
 
   /* ---------------- small helpers ---------------- */
 
@@ -194,15 +196,42 @@
     return urls;
   }
 
-  const io = "IntersectionObserver" in window
-    ? new IntersectionObserver((entries) => {
-        for (const e of entries) {
-          if (!e.isIntersecting) continue;
-          io.unobserve(e.target);
-          fillPoster(e.target);
-        }
-      }, { rootMargin: "300px 600px" })
-    : null;
+  /* ---------------- filing: A–Z the way a video store does it ---------------- */
+
+  const yearOf = (name) => (String(name).match(/\((\d{4})\)\s*$/) || [])[1] || "";
+  const titleOf = (name) => String(name).replace(/\s*\(\d{4}\)\s*$/, "");
+  // "The Shining" files under S. Accents ignored, numbers before A.
+  const fileKey = (name) =>
+    titleOf(name)
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/^(the|a|an)\s+/i, "")
+      .replace(/^[^a-z0-9]+/i, "")
+      .toLowerCase();
+  const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
+  const byTitle = (a, b) => collator.compare(fileKey(a[1]), fileKey(b[1])) || collator.compare(yearOf(a[1]), yearOf(b[1]));
+  const letterOf = (name) => {
+    const c = fileKey(name).charAt(0).toUpperCase();
+    return /[A-Z]/.test(c) ? c : "#";
+  };
+
+  /* ---------------- posters ---------------- */
+
+  const EMPTY = "https://s.ltrbxd.com/static/img/empty-poster-150-DtnLDE3k.png";
+  let io = null; // watches posters coming into view as you walk
+
+  function watchFrom(track) {
+    if (io) io.disconnect();
+    io = "IntersectionObserver" in window
+      ? new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            io.unobserve(e.target);
+            fillPoster(e.target);
+          }
+        }, { root: track, rootMargin: "0px 1400px" })
+      : null;
+  }
 
   function fillPoster(el) {
     const img = el.querySelector("img");
@@ -215,31 +244,23 @@
       .catch(() => el.classList.add("lbs-noposter"));
   }
 
-  const EMPTY = "https://s.ltrbxd.com/static/img/empty-poster-150-DtnLDE3k.png";
-
-  function posterEl([slug, name]) {
-    const li = h("li", "lbs-item");
-    li.dataset.slug = slug;
-    li.innerHTML =
-      `<div class="poster film-poster lbs-poster">` +
-      `<img class="image" src="${EMPTY}" width="150" height="225" alt="${esc(name)}" loading="lazy" decoding="async">` +
-      `<a class="frame" href="/film/${esc(slug)}/" title="${esc(name)}"><span class="frame-title">${esc(name)}</span><span class="overlay"></span></a>` +
-      `</div>`;
+  function posterHTML([slug, name]) {
     const cached = posterCache.get(slug);
-    if (cached) {
-      const img = li.querySelector("img");
-      img.src = cached[0];
-      img.srcset = `${cached[0]} 1x, ${cached[1]} 2x`;
-      li.classList.add("lbs-loaded");
-    } else if (io) io.observe(li);
-    else fillPoster(li);
-    return li;
+    const src = cached ? `src="${esc(cached[0])}" srcset="${esc(cached[0])} 1x, ${esc(cached[1])} 2x"` : `src="${EMPTY}"`;
+    return (
+      `<li class="lbs-item${cached ? " lbs-loaded" : ""}" data-slug="${esc(slug)}">` +
+      `<div class="poster film-poster lbs-poster">` +
+      `<img class="image" ${src} width="150" height="225" alt="${esc(name)}" decoding="async">` +
+      `<a class="frame" href="/film/${esc(slug)}/" title="${esc(name)}"><span class="frame-title">${esc(name)}</span><span class="overlay"></span></a>` +
+      `</div></li>`
+    );
   }
 
-  /* ---------------- the store overlay ---------------- */
+  /* ---------------- the store ---------------- */
 
   let root = null;
   let wing = "main";
+  let aisle = null; // { track, sections: [...], floor }
 
   const ICON_CLOSE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
   const ICON_LEFT = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -255,8 +276,10 @@
       root.addEventListener("click", onClick);
     }
     document.documentElement.classList.add("lbs-open");
-    root.hidden = false;
-    render();
+    if (root.hidden || !root.firstChild) {
+      root.hidden = false;
+      render();
+    }
   }
 
   function closeStore() {
@@ -278,105 +301,163 @@
     const total = stock ? stock.films.length : WINGS[0].count;
     root.innerHTML =
       `<header class="lbs-top">` +
-      `<div class="lbs-top-inner">` +
       `<div class="lbs-brand">letternøxd <span>video store</span></div>` +
+      `<div class="lbs-aisle-sign"><b>Horror</b><span>${stock ? `${fmt(total)} films · Main wing` : "Stocking…"}</span></div>` +
       `<nav class="lbs-wings" aria-label="Wings">` +
       WINGS.map((w) =>
         `<button type="button" class="lbs-wing${w.id === wing ? " -on" : ""}${w.open ? "" : " -soon"}" data-wing="${w.id}"${w.open ? "" : ' aria-disabled="true"'}>` +
-        `${w.name} <span>${fmt(w.id === "main" ? total : w.count)}</span>${w.open ? "" : '<em>soon</em>'}</button>`
+        `${w.name} <span>${fmt(w.id === "main" ? total : w.count)}</span>${w.open ? "" : "<em>soon</em>"}</button>`
       ).join("") +
       `</nav>` +
       `<button type="button" class="lbs-close" data-act="close" aria-label="Leave the store">${ICON_CLOSE}</button>` +
-      `</div></header>` +
-      `<main class="lbs-aisle">` +
-      `<div class="lbs-sign"><h1>Horror</h1><p>${stock ? `${fmt(total)} films in the Main wing, ${SHELVES.length + 1} shelves. Each film sits on one shelf.` : "Stocking the shelves…"}</p></div>` +
-      `<div class="lbs-body"></div>` +
-      `</main>`;
+      `</header>` +
+      `<div class="lbs-hall"></div>`;
 
-    const body = $(".lbs-body", root);
-    if (stock) return fillAisle(body);
+    const hall = $(".lbs-hall", root);
+    if (stock) return buildAisle(hall);
 
-    const bar = h("div", "lbs-loading", `<div class="lbs-meter"><i></i></div><p>Reading Horror's top ${fmt(WINGS[0].count)} films from Letterboxd. This happens once a week and takes about a minute.</p>`);
-    body.append(bar);
+    const box = h("div", "lbs-loading", `<div class="lbs-meter"><i></i></div><p>Stocking the shelves: reading Horror's top ${fmt(WINGS[0].count)} films from Letterboxd. This happens once a week and takes about half a minute.</p>`);
+    hall.append(box);
     buildStock((f) => {
       const i = $(".lbs-meter i", root);
       if (i) i.style.width = `${Math.round(f * 100)}%`;
     })
       .then((s) => { stock = s; if (root && !root.hidden) render(); })
       .catch((err) => {
-        bar.innerHTML = `<p>Couldn't stock the shelves (${esc(err.message)}). <button type="button" class="lbs-retry" data-act="retry">Try again</button></p>`;
+        box.innerHTML = `<p>Couldn't stock the shelves (${esc(err.message)}). <button type="button" class="lbs-retry" data-act="retry">Try again</button></p>`;
       });
   }
 
-  function fillAisle(body) {
+  // Sizes that make the shelving fill the height of the window.
+  const SIGN_H = 64; // the laminated sign above each section
+  const LEDGE = 12; // shelf board
+  const HEADROOM = 10; // gap between a poster's top and the shelf above
+  function geometry(height) {
+    const avail = Math.max(240, height - SIGN_H - 16);
+    let rows = Math.max(3, Math.min(8, Math.floor(avail / 150)));
+    let ph = Math.floor(avail / rows) - LEDGE - HEADROOM;
+    ph = Math.max(84, Math.min(165, ph));
+    return { rows, ph, pw: Math.round((ph * 2) / 3), rowH: ph + LEDGE + HEADROOM };
+  }
+
+  function buildAisle(hall) {
     const film = (i) => stock.films[i];
-    if (stock.front && stock.front.length) {
-      body.append(shelfEl({ id: "front", name: "Front Display", note: "popular this week" }, stock.front, { front: true }));
-    }
-    for (const shelf of [...SHELVES, EVERYTHING]) {
-      const items = (stock.shelves[shelf.id] || []).map(film);
-      if (items.length) body.append(shelfEl(shelf, items));
-    }
-    const foot = h("p", "lbs-foot");
-    foot.innerHTML = `Stock list from ${new Date(stock.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}. <button type="button" data-act="restock">Restock now</button>`;
-    body.append(foot);
+    const sections = [...SHELVES]
+      .sort((a, b) => collator.compare(fileKey(a.name), fileKey(b.name)))
+      .concat(EVERYTHING)
+      .map((s) => ({ ...s, items: (stock.shelves[s.id] || []).map(film).sort(byTitle) }))
+      .filter((s) => s.items.length);
+    const endcap = stock.front && stock.front.length ? { id: "front", name: "Popular This Week", endcap: true, items: stock.front.slice(0, 12) } : null;
+
+    hall.innerHTML =
+      `<div class="lbs-walk">` +
+      `<button type="button" class="lbs-step -back" data-act="back" aria-label="Walk back">${ICON_LEFT}</button>` +
+      `<div class="lbs-track" tabindex="0" aria-label="Horror aisle. Scroll or use the arrow keys to walk."><div class="lbs-wall"></div></div>` +
+      `<button type="button" class="lbs-step -on" data-act="on" aria-label="Walk on">${ICON_RIGHT}</button>` +
+      `</div>` +
+      `<footer class="lbs-floor"><div class="lbs-map"></div><div class="lbs-you"></div></footer>`;
+
+    const track = $(".lbs-track", hall);
+    const wall = $(".lbs-wall", hall);
+    watchFrom(track);
+    const g = geometry(track.clientHeight || window.innerHeight - 160);
+    root.style.setProperty("--ph", `${g.ph}px`);
+    root.style.setProperty("--pw", `${g.pw}px`);
+    root.style.setProperty("--row", `${g.rowH}px`);
+    root.style.setProperty("--rows", g.rows);
+    root.style.setProperty("--sign", `${SIGN_H}px`);
+    root.style.setProperty("--ledge", `${LEDGE}px`);
+
+    const all = endcap ? [endcap, ...sections] : sections;
+    wall.innerHTML = all
+      .map((s, n) => {
+        const tilt = [-1.2, 0.8, -0.5, 1.1, -0.9, 0.4][n % 6];
+        const range = s.endcap ? "face-out, may repeat" : `${letterOf(s.items[0][1])}–${letterOf(s.items.at(-1)[1])}`;
+        return (
+          `<section class="lbs-bay${s.endcap ? " -endcap" : ""}" data-shelf="${s.id}">` +
+          `<div class="lbs-signpost"><div class="lbs-sign" style="--tilt:${tilt}deg">` +
+          `<i class="lbs-tape -l"></i><i class="lbs-tape -r"></i>` +
+          `<b>${esc(s.name)}</b><small>${s.endcap ? range : `${fmt(s.items.length)} films · ${range}`}</small>` +
+          `</div></div>` +
+          `<ul class="lbs-shelves">${s.items.map(posterHTML).join("")}</ul>` +
+          `</section>`
+        );
+      })
+      .join("");
+
+    wall.querySelectorAll(".lbs-item:not(.lbs-loaded)").forEach((li) => (io ? io.observe(li) : fillPoster(li)));
+
+    // Floor guide: every section along the aisle, to scale. Click to walk there.
+    const bays = [...wall.children];
+    const width = wall.scrollWidth;
+    $(".lbs-map", hall).innerHTML = bays
+      .map((b, n) => `<button type="button" data-act="goto" data-n="${n}" style="flex-grow:${b.offsetWidth}" title="${esc(all[n].name)}"><span>${esc(all[n].name)}</span></button>`)
+      .join("");
+    aisle = { track, wall, bays, width, all };
+    track.addEventListener("scroll", onWalk, { passive: true });
+    track.addEventListener("wheel", onWheel, { passive: false });
+    track.addEventListener("keydown", onKey);
+    onWalk();
+    track.focus({ preventScroll: true });
   }
 
-  function shelfEl(shelf, items, { front = false } = {}) {
-    const sec = h("section", `lbs-shelf${front ? " -front" : ""}`);
-    sec.dataset.shelf = shelf.id;
-    sec._items = items;
-    sec._shown = 0;
-    const more = !front && items.length > 8;
-    sec.innerHTML =
-      `<div class="lbs-label">` +
-      `<h2>${esc(shelf.name)}</h2>` +
-      `<span class="lbs-count">${shelf.note ? esc(shelf.note) : `${fmt(items.length)} film${items.length === 1 ? "" : "s"}`}</span>` +
-      (more ? `<button type="button" class="lbs-all" data-act="expand">See all</button>` : "") +
-      `</div>` +
-      `<div class="lbs-rack">` +
-      `<button type="button" class="lbs-nudge -left" data-act="left" aria-label="Scroll left" hidden>${ICON_LEFT}</button>` +
-      `<ul class="lbs-row"></ul>` +
-      `<button type="button" class="lbs-nudge -right" data-act="right" aria-label="Scroll right">${ICON_RIGHT}</button>` +
-      `</div>` +
-      `<div class="lbs-ledge"></div>`;
-    const row = $(".lbs-row", sec);
-    addPosters(sec, Math.min(items.length, ROW_LIMIT));
-    row.addEventListener("scroll", () => nudges(sec), { passive: true });
-    requestAnimationFrame(() => nudges(sec));
-    return sec;
+  // Scrolling is walking: a vertical wheel moves you along the aisle.
+  function onWheel(e) {
+    if (!aisle) return;
+    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!d) return;
+    e.preventDefault();
+    aisle.track.scrollLeft += d * (e.deltaMode === 1 ? 40 : 1);
   }
 
-  function addPosters(sec, upTo) {
-    const row = $(".lbs-row", sec);
-    const frag = document.createDocumentFragment();
-    for (let i = sec._shown; i < upTo; i++) frag.append(posterEl(sec._items[i]));
-    sec._shown = Math.max(sec._shown, upTo);
-    row.append(frag);
-    let tail = $(".lbs-more", sec);
-    if (sec.classList.contains("-grid") && sec._shown < sec._items.length) {
-      if (!tail) {
-        tail = h("div", "lbs-more");
-        sec.append(tail);
+  function walk(dir) {
+    const t = aisle.track;
+    t.scrollBy({ left: dir * Math.max(t.clientWidth * 0.8, 300), behavior: "smooth" });
+  }
+
+  function onKey(e) {
+    if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); walk(1); }
+    else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); walk(-1); }
+    else if (e.key === "Home") { e.preventDefault(); aisle.track.scrollTo({ left: 0, behavior: "smooth" }); }
+    else if (e.key === "End") { e.preventDefault(); aisle.track.scrollTo({ left: aisle.track.scrollWidth, behavior: "smooth" }); }
+  }
+
+  let walkFrame = 0;
+  function onWalk() {
+    if (walkFrame) return;
+    walkFrame = requestAnimationFrame(() => {
+      walkFrame = 0;
+      if (!aisle) return;
+      const t = aisle.track;
+      const w = t.scrollWidth || 1;
+      const you = $(".lbs-you", root);
+      if (you) {
+        you.style.left = `${(t.scrollLeft / w) * 100}%`;
+        you.style.width = `${(t.clientWidth / w) * 100}%`;
       }
-      tail.innerHTML = `<button type="button" data-act="more">Show more <span>${fmt(sec._items.length - sec._shown)} left</span></button>`;
-    } else if (tail) tail.remove();
+      $(".lbs-step.-back", root).hidden = t.scrollLeft < 4;
+      $(".lbs-step.-on", root).hidden = t.scrollLeft + t.clientWidth >= t.scrollWidth - 4;
+      // Light up the section(s) you're standing in.
+      const mid = t.scrollLeft + t.clientWidth / 2;
+      const btns = root.querySelectorAll(".lbs-map button");
+      aisle.bays.forEach((b, n) => btns[n] && btns[n].classList.toggle("-here", b.offsetLeft <= mid && mid < b.offsetLeft + b.offsetWidth));
+    });
   }
 
-  function nudges(sec) {
-    const row = $(".lbs-row", sec);
-    const grid = sec.classList.contains("-grid");
-    const l = $(".lbs-nudge.-left", sec);
-    const r = $(".lbs-nudge.-right", sec);
-    if (!l || !r) return;
-    l.hidden = grid || row.scrollLeft < 4;
-    r.hidden = grid || row.scrollLeft + row.clientWidth >= row.scrollWidth - 4;
-  }
+  let resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    if (!root || root.hidden || !aisle) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const at = aisle.track.scrollLeft / (aisle.track.scrollWidth || 1);
+      buildAisle($(".lbs-hall", root));
+      aisle.track.scrollLeft = at * aisle.track.scrollWidth;
+    }, 200);
+  });
 
   function onClick(e) {
     const btn = e.target.closest("[data-act], [data-wing]");
     if (!btn || !root.contains(btn)) return;
-    const sec = btn.closest(".lbs-shelf");
     const act = btn.dataset.act;
     if (btn.dataset.wing) {
       if (btn.getAttribute("aria-disabled") === "true") return;
@@ -390,25 +471,12 @@
       stock = null;
       return render();
     }
-    if (!sec) return;
-    const row = $(".lbs-row", sec);
-    if (act === "left" || act === "right") {
-      row.scrollBy({ left: (act === "left" ? -1 : 1) * Math.max(row.clientWidth - 160, 300), behavior: "smooth" });
-    } else if (act === "expand") {
-      const open = !sec.classList.contains("-grid");
-      sec.classList.toggle("-grid", open);
-      btn.textContent = open ? "Show less" : "See all";
-      if (open) addPosters(sec, Math.min(sec._items.length, Math.max(sec._shown, GRID_STEP)));
-      else {
-        [...row.children].slice(ROW_LIMIT).forEach((n) => n.remove());
-        sec._shown = Math.min(sec._shown, ROW_LIMIT);
-        $(".lbs-more", sec)?.remove();
-        row.scrollLeft = 0;
-        sec.scrollIntoView({ block: "nearest" });
-      }
-      nudges(sec);
-    } else if (act === "more") {
-      addPosters(sec, Math.min(sec._items.length, sec._shown + GRID_STEP));
+    if (!aisle) return;
+    if (act === "back") walk(-1);
+    else if (act === "on") walk(1);
+    else if (act === "goto") {
+      const bay = aisle.bays[+btn.dataset.n];
+      if (bay) aisle.track.scrollTo({ left: Math.max(0, bay.offsetLeft - 24), behavior: "smooth" });
     }
   }
 
@@ -444,7 +512,7 @@
     li.after(item);
   }
 
-  // On the home page: a strip that shows the front display and walks you in.
+  // On the home page: a strip that walks you in.
   function addHomeStrip() {
     if (location.pathname !== "/" || document.querySelector(".lbs-home")) return;
     const host = document.querySelector("#content .content-wrap") || document.querySelector("#content");
@@ -454,7 +522,7 @@
       `<a class="lbs-home-door" href="#store">` +
       `<span class="lbs-home-kicker">letternøxd video store</span>` +
       `<span class="lbs-home-title">The Horror aisle is open</span>` +
-      `<span class="lbs-home-sub">${SHELVES.length + 1} shelves, every film in one place. Walk in →</span>` +
+      `<span class="lbs-home-sub">${SHELVES.length + 1} sections, every film in one place, A to Z. Walk in →</span>` +
       `</a>`;
     strip.querySelector("a").addEventListener("click", enterStore);
     // Just under "Welcome back…", above your friends' activity.

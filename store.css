@@ -1,4 +1,4 @@
-/* ---- Letternøxd Video Store (prototype) ---- */
+/* ---- Letternøxd Video Store: one physical aisle ---- */
 
 html.lbs-open {
   overflow: hidden;
@@ -8,9 +8,10 @@ html.lbs-open {
   position: fixed;
   inset: 0;
   z-index: 2147482000;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  background: #14181c;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0f1317;
   color: #9ab;
   font-family: inherit;
   -webkit-font-smoothing: antialiased;
@@ -23,24 +24,16 @@ html.lbs-open {
   cursor: pointer;
 }
 
-/* Top bar */
+/* ---------- top bar ---------- */
 .lbs-top {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background: rgba(20, 24, 28, 0.96);
-  border-bottom: 1px solid #2c3440;
-  backdrop-filter: blur(6px);
-}
-.lbs-top-inner {
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 24px;
-  max-width: 1240px;
+  gap: 20px;
   height: 56px;
-  margin: 0 auto;
-  padding: 0 24px;
-  box-sizing: border-box;
+  padding: 0 20px;
+  background: #14181c;
+  border-bottom: 1px solid #2c3440;
 }
 .lbs-brand {
   color: #fff;
@@ -56,6 +49,28 @@ html.lbs-open {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   margin-left: 4px;
+}
+/* The overhead aisle marker */
+.lbs-aisle-sign {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 14px;
+  border-radius: 3px;
+  background: #222b34;
+  box-shadow: 0 0 0 1px #384350 inset;
+}
+.lbs-aisle-sign b {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.lbs-aisle-sign span {
+  font-size: 12px;
+  color: #789;
+  white-space: nowrap;
 }
 .lbs-wings {
   display: flex;
@@ -90,11 +105,9 @@ html.lbs-open {
 .lbs-wing.-on span {
   color: #9ab;
 }
-.lbs-wing.-soon {
-  cursor: default;
-  color: #567;
-}
+.lbs-wing.-soon,
 .lbs-wing.-soon:hover {
+  cursor: default;
   color: #567;
 }
 .lbs-wing em {
@@ -127,32 +140,15 @@ html.lbs-open {
   height: 18px;
 }
 
-/* The aisle */
-.lbs-aisle {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 36px 24px 80px;
-  box-sizing: border-box;
+/* ---------- loading ---------- */
+.lbs-hall {
+  position: relative;
+  flex: 1;
+  min-height: 0;
 }
-.lbs-sign {
-  margin-bottom: 28px;
+.lbs-loading {
+  padding: 48px 32px;
 }
-.lbs-sign h1 {
-  margin: 0;
-  color: #fff;
-  font-size: 44px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.lbs-sign p {
-  margin: 10px 0 0;
-  font-size: 14px;
-  color: #789;
-}
-
-/* Loading */
 .lbs-loading p {
   max-width: 520px;
   font-size: 14px;
@@ -174,197 +170,291 @@ html.lbs-open {
   background: #40bcf4;
   transition: width 0.3s;
 }
-.lbs-retry,
-.lbs-foot button {
+.lbs-retry {
   all: unset;
   color: #40bcf4;
   cursor: pointer;
 }
-.lbs-retry:hover,
-.lbs-foot button:hover {
-  color: #fff;
-}
 
-/* A shelf */
-.lbs-shelf {
-  margin: 0 0 40px;
-}
-.lbs-label {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin: 0 0 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #2c3440;
-}
-.lbs-label h2 {
-  margin: 0;
-  color: #def;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.lbs-count {
-  font-size: 12px;
-  color: #678;
-}
-.lbs-all {
-  all: unset;
-  margin-left: auto;
-  font-size: 12px;
-  color: #9ab;
-  cursor: pointer;
-}
-.lbs-all:hover {
-  color: #fff;
-}
-
-.lbs-rack {
+/* ---------- the aisle ---------- */
+.lbs-walk {
   position: relative;
+  height: calc(100% - 34px);
 }
-.lbs-row {
-  display: flex;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.lbs-track {
+  height: 100%;
   overflow-x: auto;
-  scroll-snap-type: x proximity;
+  overflow-y: hidden;
   scrollbar-width: none;
+  outline: none;
 }
-.lbs-row::-webkit-scrollbar {
+.lbs-track::-webkit-scrollbar {
   display: none;
 }
-.lbs-item {
-  flex: none;
-  scroll-snap-align: start;
+/* The back wall: pegboard */
+.lbs-wall {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  height: 100%;
+  background-color: #161b20;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.55) 1.3px, transparent 1.8px);
+  background-size: 18px 18px;
+  background-position: 9px 9px;
 }
 
-/* Posters: Letterboxd's own .poster/.frame styles do the frame and hover. */
+/* One section of shelving */
+.lbs-bay {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 30px;
+  box-shadow: inset 0 -40px 40px -30px rgba(0, 0, 0, 0.5);
+}
+/* Uprights between sections */
+.lbs-bay::before,
+.lbs-bay:last-child::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -6px;
+  z-index: 1;
+  width: 12px;
+  background: linear-gradient(90deg, #12161a 0%, #3b4652 35%, #2a333d 65%, #101418 100%);
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.45), -4px 0 10px rgba(0, 0, 0, 0.45);
+}
+.lbs-bay:first-child::before {
+  left: 0;
+}
+.lbs-bay:last-child::after {
+  left: auto;
+  right: 0;
+}
+
+/* Laminated signs */
+.lbs-signpost {
+  flex: none;
+  height: var(--sign);
+  padding-top: 12px;
+  box-sizing: border-box;
+}
+.lbs-sign {
+  position: sticky;
+  left: 44px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 260px;
+  padding: 7px 16px 6px;
+  border-radius: 5px;
+  background-color: #f2eee3;
+  background-image: linear-gradient(
+    112deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0) 32%,
+    rgba(255, 255, 255, 0) 58%,
+    rgba(255, 255, 255, 0.35) 70%,
+    rgba(255, 255, 255, 0) 84%
+  );
+  color: #14181c;
+  transform: rotate(var(--tilt, 0deg));
+  /* the clear laminate border, then the drop shadow on the pegboard */
+  box-shadow:
+    0 0 0 4px rgba(225, 232, 238, 0.16),
+    0 0 0 5px rgba(255, 255, 255, 0.08),
+    0 7px 14px rgba(0, 0, 0, 0.55);
+}
+.lbs-sign b {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lbs-sign small {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #5d6873;
+  white-space: nowrap;
+}
+.lbs-tape {
+  position: absolute;
+  top: -7px;
+  width: 34px;
+  height: 14px;
+  background: rgba(250, 246, 228, 0.42);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.lbs-tape.-l {
+  left: 8px;
+  transform: rotate(-9deg);
+}
+.lbs-tape.-r {
+  right: 8px;
+  transform: rotate(7deg);
+}
+
+/* The shelves: films fill top to bottom, then step right, A to Z */
+.lbs-shelves {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(var(--rows), var(--row));
+  grid-auto-columns: var(--pw);
+  column-gap: 8px;
+  margin: 0 -30px;
+  padding: 0 30px;
+  list-style: none;
+  /* a board under every row */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--row) - var(--ledge)),
+    #4c5764 calc(var(--row) - var(--ledge)),
+    #4c5764 calc(var(--row) - var(--ledge) + 2px),
+    #2b333d calc(var(--row) - var(--ledge) + 2px),
+    #222931 calc(var(--row) - 2px),
+    #0c0f12 calc(var(--row) - 2px),
+    #0c0f12 var(--row)
+  );
+}
+.lbs-item {
+  display: flex;
+  align-items: flex-end;
+  height: var(--row);
+  padding-bottom: var(--ledge);
+  box-sizing: border-box;
+}
+/* Posters use Letterboxd's own .poster/.frame styles for the frame and hover. */
 .lbs-poster {
   position: relative;
-  width: 116px;
-  height: 174px;
+  width: var(--pw);
+  height: var(--ph);
   border-radius: 3px;
   overflow: hidden;
   background: #2c3440;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.7);
 }
 .lbs-poster .image {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: opacity 0.25s;
 }
 .lbs-poster .frame {
   position: absolute;
   inset: 0;
 }
 .lbs-item:not(.lbs-loaded) .image {
-  opacity: 0.35;
-}
-.lbs-item .image {
-  transition: opacity 0.25s;
+  opacity: 0.3;
 }
 
-/* The ledge the posters stand on */
-.lbs-ledge {
-  height: 10px;
-  margin-top: 0;
-  border-radius: 0 0 3px 3px;
-  background: linear-gradient(#2c3440, #1c2228);
-  box-shadow: 0 1px 0 #384350 inset, 0 8px 14px -6px rgba(0, 0, 0, 0.7);
+/* End cap: the lit display at the head of the aisle */
+.lbs-bay.-endcap {
+  background: linear-gradient(#1d2730, #151b21);
+  box-shadow: inset 0 60px 80px -40px rgba(64, 188, 244, 0.12);
+}
+.lbs-bay.-endcap .lbs-sign {
+  background-color: #ffd447;
+}
+.lbs-bay.-endcap .lbs-sign small {
+  color: #6b5a14;
 }
 
-/* Front display: bigger boxes */
-.lbs-shelf.-front .lbs-poster {
-  width: 150px;
-  height: 225px;
-}
-.lbs-shelf.-front .lbs-label h2 {
-  color: #40bcf4;
-}
-
-/* Scroll arrows */
-.lbs-nudge {
+/* Walk buttons */
+.lbs-step {
   all: unset;
   position: absolute;
   top: 50%;
-  z-index: 2;
+  z-index: 3;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  margin-top: -18px;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
   border-radius: 50%;
-  background: rgba(20, 24, 28, 0.88);
-  box-shadow: 0 0 0 1px #456, 0 4px 12px rgba(0, 0, 0, 0.6);
+  background: rgba(20, 24, 28, 0.9);
+  box-shadow: 0 0 0 1px #456, 0 4px 14px rgba(0, 0, 0, 0.6);
   color: #def;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.55;
   transition: opacity 0.15s;
 }
-.lbs-nudge[hidden] {
+.lbs-step[hidden] {
   display: none;
 }
-.lbs-nudge svg {
-  width: 18px;
-  height: 18px;
-}
-.lbs-nudge.-left {
-  left: -14px;
-}
-.lbs-nudge.-right {
-  right: -14px;
-}
-.lbs-rack:hover .lbs-nudge {
+.lbs-walk:hover .lbs-step {
   opacity: 1;
 }
-.lbs-nudge:hover {
+.lbs-step:hover {
   background: #2c3440;
   color: #fff;
 }
+.lbs-step svg {
+  width: 20px;
+  height: 20px;
+}
+.lbs-step.-back {
+  left: 14px;
+}
+.lbs-step.-on {
+  right: 14px;
+}
 
-/* See all: the shelf opens into a grid */
-.lbs-shelf.-grid .lbs-row {
-  flex-wrap: wrap;
-  overflow: visible;
-  row-gap: 16px;
+/* ---------- floor guide ---------- */
+.lbs-floor {
+  position: relative;
+  height: 34px;
+  background: #14181c;
+  border-top: 1px solid #2c3440;
 }
-.lbs-shelf.-grid .lbs-ledge {
-  display: none;
+.lbs-map {
+  display: flex;
+  height: 100%;
 }
-.lbs-more {
-  margin-top: 18px;
-  text-align: center;
-}
-.lbs-more button {
+.lbs-map button {
   all: unset;
-  padding: 8px 16px;
-  border-radius: 3px;
-  background: #2c3440;
-  color: #def;
-  font-size: 13px;
-  font-weight: 600;
+  flex-basis: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #0f1317;
+  background: #1a2026;
+  color: #678;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
 }
-.lbs-more button:hover {
-  background: #456;
+.lbs-map button span {
+  overflow: hidden;
+  padding: 0 6px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.lbs-map button:hover {
+  background: #232b33;
+  color: #def;
+}
+.lbs-map button.-here {
+  background: #26303a;
   color: #fff;
 }
-.lbs-more span {
-  color: #9ab;
-  font-weight: 400;
-  margin-left: 4px;
+.lbs-you {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px #40bcf4;
+  pointer-events: none;
 }
 
-.lbs-foot {
-  margin-top: 48px;
-  font-size: 12px;
-  color: #567;
-}
-
-/* Home page strip */
+/* ---------- home page strip ---------- */
 .lbs-home {
   margin: 0 0 28px;
 }
@@ -397,28 +487,15 @@ html.lbs-open {
   font-size: 13px;
 }
 
-@media (max-width: 720px) {
-  .lbs-top-inner {
+@media (max-width: 760px) {
+  .lbs-top {
     gap: 10px;
     padding: 0 12px;
   }
   .lbs-brand span,
+  .lbs-aisle-sign span,
   .lbs-wing span,
   .lbs-wing em {
     display: none;
-  }
-  .lbs-aisle {
-    padding: 24px 16px 60px;
-  }
-  .lbs-sign h1 {
-    font-size: 32px;
-  }
-  .lbs-poster {
-    width: 96px;
-    height: 144px;
-  }
-  .lbs-shelf.-front .lbs-poster {
-    width: 120px;
-    height: 180px;
   }
 }
