@@ -608,132 +608,8 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   padding: 5px;
 }
 
-/* ---- TEMPORARY toggles menu (bottom right) ---- */
-.lbni-toggles {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 100001;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  font: 12px/1.3 -apple-system, BlinkMacSystemFont, Graphik, sans-serif;
-}
-.lbni-toggles-open {
-  all: unset;
-  cursor: pointer;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: #2c3440;
-  color: #def;
-  font-weight: 600;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-}
-.lbni-toggles-open:hover,
-.lbni-toggles-open[aria-expanded="true"] {
-  background: #456;
-  color: #fff;
-}
-.lbni-toggles-open:focus-visible {
-  outline: 2px solid #40bcf4;
-  outline-offset: 2px;
-}
-.lbni-toggles-panel {
-  order: -1;
-  padding: 8px 0;
-  border-radius: 4px;
-  background: #89a;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
-}
-.lbni-toggles-panel[hidden] {
-  display: none;
-}
-.lbni-toggles-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 12px;
-  color: #2c3440;
-}
-.lbni-toggles-row .lbni-row-label {
-  flex: 0 0 64px;
-}
-
-/* ---- Rating looks (temporary, for comparing) ---- */
-/* ★3.5: a small solid star before the number, same colour. */
-.lbni-badges > .lbni-look-star {
-  gap: 1px;
-  padding-left: 5px;
-}
-.lbni-badges > .lbni-look-star svg {
-  flex: none;
-  width: 0.78em;
-  height: 0.78em;
-}
-/* In star: a dark solid star as the badge, the number on top. */
-.lbni-badges > .lbni-instar {
-  position: relative;
-  width: 34px;
-  min-width: 0;
-  height: 34px;
-  margin: -3px 0 -3px -3px;
-  padding: 3px 0 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  font-size: 9.5px;
-}
-.lbni-badges > .lbni-instar svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  color: rgba(20, 24, 28, 0.86);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-}
-.lbni-badges > .lbni-instar .lbni-num {
-  position: relative;
-}
-/* Outline the star in the badge colour so its shape reads on any poster. */
-.lbni-badges > .lbni-look-instar svg path {
-  stroke-width: 1.3;
-}
-.lbni-badges > .lbni-look-instar.lbni-badge-seen svg path {
-  stroke: #00e054;
-}
-.lbni-badges > .lbni-look-instar.lbni-badge-loved svg path {
-  stroke: #ff8000;
-}
-.lbni-small > .lbni-badges > .lbni-instar {
-  width: 28px;
-  min-width: 0;
-  height: 28px;
-  padding: 2px 0 0;
-  font-size: 8px;
-}
-.lbni-toggles-row .lbni-row-label {
-  flex-basis: 76px;
-}
-
-/* Dark ★: solid dark star, coloured number (no outline). */
-.lbni-badges > .lbni-look-stardark svg {
-  color: rgba(20, 24, 28, 0.9);
-}
-/* Color ★: solid green / orange star, dark number. */
-.lbni-badges > .lbni-look-starcolor.lbni-badge-seen svg {
-  color: #00e054;
-}
-.lbni-badges > .lbni-look-starcolor.lbni-badge-loved svg {
-  color: #ff8000;
-}
-.lbni-badges > .lbni-look-starcolor .lbni-num {
-  color: #14181c;
-}
-
-/* 3½: a hair of space before the ½ (the badge text is tightly tracked). */
+/* Half-star ratings: the whole number hugging a small, top-aligned .5. */
 .lbni-half {
-  margin-left: 0;
   font-size: 0.68em; /* noticeably smaller than the whole number */
   font-weight: 600; /* semi-bold: a step down from the bold whole number */
   /* Top-aligned with the whole number rather than sitting on its baseline. */
@@ -934,14 +810,6 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-large > .lbni-badges > .lbni-badge-star {
   padding: 9px;
 }
-.lbni-large > .lbni-badges > .lbni-instar {
-  width: 48px;
-  min-width: 0;
-  height: 48px;
-  margin: -4px 0 -4px -4px;
-  padding: 4px 0 0;
-  font-size: 13.5px;
-}
 .lbni-large > .lbni-rate {
   left: 8px;
   top: calc(8px + var(--lbni-rate-slot, 0) * 46px);
@@ -956,38 +824,4 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 }
 .lbni-large.lbni-host:is(:hover, :has(:focus-visible)) > .lbni-rate {
   top: 8px;
-}
-
-/* ---- Rating ring: an arc around the rating, rating/5 of the way round ---- */
-/* Filled clockwise from 12 o'clock in the badge colour, over a faint track
-   so a short arc reads as part of a whole. The badge stays a circle. */
-.lbni-badges > .lbni-badge-num.lbni-arc {
-  --lbni-arc-w: 2px;
-  position: relative;
-  width: 28px;
-  min-width: 0;
-  padding: 0;
-  border-radius: 50%;
-}
-.lbni-badges > .lbni-badge-num.lbni-arc::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(currentColor calc(var(--lbni-p, 0) * 360deg), rgba(221, 238, 255, 0.16) 0);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--lbni-arc-w)), #000 calc(100% - var(--lbni-arc-w) + 0.5px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - var(--lbni-arc-w)), #000 calc(100% - var(--lbni-arc-w) + 0.5px));
-}
-.lbni-badges > .lbni-badge-num.lbni-arc > .lbni-num {
-  position: relative;
-}
-.lbni-small > .lbni-badges > .lbni-badge-num.lbni-arc {
-  --lbni-arc-w: 1.6px;
-  width: 22px;
-  padding: 0;
-}
-.lbni-large > .lbni-badges > .lbni-badge-num.lbni-arc {
-  --lbni-arc-w: 3px;
-  width: 40px;
-  padding: 0;
 }

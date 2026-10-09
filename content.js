@@ -58,26 +58,19 @@
   delete prefs.fadeLiked;
   delete prefs.fadeWatchlist;
   if (!MODES.includes(prefs.mode)) prefs.mode = "hide";
-  // Badge style: "current" (eye / heart + rating pill), "ratings" (the rating
-  // number itself, green = seen, orange = liked) or "none".
+  // Badges: "current" = icons (eye / heart, watchlist clock, rating pill),
+  // "ratings" = your rating number (green = seen, orange = liked), "none" = off.
   const BADGE_STYLES = ["current", "ratings", "none"];
   if (!BADGE_STYLES.includes(prefs.badgeStyle)) prefs.badgeStyle = prefs.indicators === false ? "none" : "current";
   const setBadgeStyle = (style) => {
-    if (style !== "none") prefs.lastBadgeStyle = style;
     prefs.badgeStyle = style;
     prefs.indicators = style !== "none";
     savePrefs();
   };
-  // How a rating number looks in the "ratings" style: "plain" (3.5),
-  // "star" (★3.5), "half" (3½), or the number inside a star: "instar"
-  // (dark, outlined), "stardark" (solid dark grey, coloured number) or
-  // "starcolor" (solid green / orange, dark number).
-  const RATING_LOOKS = ["plain", "star", "half", "instar", "stardark", "starcolor"];
-  const IN_STAR = ["instar", "stardark", "starcolor"];
-  if (!RATING_LOOKS.includes(prefs.ratingLook)) prefs.ratingLook = "half";
-  // A ring around the rating, filled clockwise from 12 o'clock in proportion
-  // to the rating (5 = full circle). Only for the round looks (3.5 / 3½).
-  if (typeof prefs.ratingRing !== "boolean") prefs.ratingRing = true;
+  // Options that were only for trying looks out.
+  delete prefs.ratingLook;
+  delete prefs.ratingRing;
+  delete prefs.lastBadgeStyle;
   const savePrefs = () => writeJSON(PREFS_KEY, prefs);
 
   let USER = null; // set once the page is ready
@@ -555,36 +548,19 @@
     '<path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.8l-5.4 3 1.2-6.1-4.5-4.2 6.1-.7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'
   );
   const BADGE_ICON = { loved: ICON_HEART, seen: ICON_EYE, watchlist: ICON_CLOCK, "watchlist-faded": ICON_CLOCK };
-  const ICON_STAR_SOLID = svg(
-    "0 0 24 24",
-    '<path d="M12 2.6l2.8 6 6.6.8-4.9 4.5 1.3 6.5L12 17.2l-5.8 3.2 1.3-6.5-4.9-4.5 6.6-.8z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>'
-  );
-  // A rating as text, in the chosen look: 3.5 / 3½.
-  const ratingLabel = (rating, look) => {
+  // A rating as badge text: 4, or 3 hugging a small, top-aligned .5.
+  const ratingLabel = (rating) => {
     if (!(rating > 0)) return "";
-    if (look === "half" || look === "stardark" || look === "starcolor") {
-      if (!(rating % 1)) return String(rating);
-      const whole = Math.floor(rating);
-      // The whole number hugging a small, top-aligned .5.
-      return whole ? `${whole}<span class="${NS}-half">.5</span>` : ".5";
-    }
-    return String(rating % 1 ? rating.toFixed(1) : rating);
+    if (!(rating % 1)) return String(rating);
+    const whole = Math.floor(rating);
+    return whole ? `${whole}<span class="${NS}-half">.5</span>` : ".5";
   };
   // One badge's markup. "num-seen" / "num-loved" show the rating number;
   // "star-seen" / "star-loved" an outlined star; the rest an icon.
   const badgeHTML = (rating) => (k) => {
     const [type, tone] = k.split("-");
-    if (type === "num") {
-      const look = prefs.ratingLook;
-      const text = `<span class="${NS}-num">${ratingLabel(rating, look)}</span>`;
-      const inStar = IN_STAR.includes(look);
-      const extra = look === "star" || inStar ? ICON_STAR_SOLID : "";
-      const arc = prefs.ratingRing && (look === "plain" || look === "half");
-      return (
-        `<span class="${NS}-badge ${NS}-badge-num ${NS}-look-${look}${inStar ? ` ${NS}-instar` : ""}${arc ? ` ${NS}-arc` : ""} ${NS}-badge-${tone}"` +
-        `${arc ? ` style="--lbni-p:${Math.min(1, rating / 5)}"` : ""}>${extra}${text}</span>`
-      );
-    }
+    if (type === "num")
+      return `<span class="${NS}-badge ${NS}-badge-num ${NS}-badge-${tone}"><span class="${NS}-num">${ratingLabel(rating)}</span></span>`;
     if (type === "star") return `<span class="${NS}-badge ${NS}-badge-star ${NS}-badge-${tone}">${ICON_STAR}</span>`;
     return `<span class="${NS}-badge ${NS}-badge-${k}">${BADGE_ICON[k]}</span>`;
   };
@@ -669,7 +645,7 @@
         wrap.setAttribute("aria-hidden", "true");
         item.append(wrap);
       }
-      const key = badges.join(",") + "|" + ratingText + "|" + prefs.ratingLook + "|" + prefs.ratingRing;
+      const key = badges.join(",") + "|" + ratingText;
       if (wrap.dataset.key !== key) {
         wrap.dataset.key = key;
         wrap.innerHTML = badges.map(badgeHTML(st.rating)).join("");
@@ -1075,7 +1051,7 @@
     if (input && window.jQuery && input.checked !== on) window.jQuery(input).prop("checked", on).trigger("change");
   }
 
-  const LABELS = { show: "Show", fade: "Fade", hide: "Hide", only: "Only", on: "On", off: "Off" };
+  const LABELS = { show: "Show", fade: "Fade", hide: "Hide", only: "Only", on: "On", off: "Off", current: "Icons", ratings: "Ratings", none: "Off" };
 
   // Each row: which choices it offers, how to read its state, how to set it.
   function nativeRow(label, cat, { fade } = {}) {
@@ -1123,13 +1099,10 @@
   function buildRows() {
     const account = [
       {
-        label: "Status badges",
-        options: ["on", "off"],
-        get: () => (prefs.badgeStyle !== "none" ? "on" : "off"),
-        set: (v) => {
-          setBadgeStyle(v === "on" ? prefs.lastBadgeStyle || "current" : "none");
-          renderToggles();
-        },
+        label: "Badges",
+        options: ["current", "ratings", "none"],
+        get: () => prefs.badgeStyle,
+        set: (v) => setBadgeStyle(v),
       },
       "divider",
       localRow("Watched", "watched", "watched"),
@@ -1330,95 +1303,6 @@
     console.info("[Letternoxd] feedback (kept locally for now):", text);
   }
 
-  // ================================================================ temporary toggles menu
-  // TEMPORARY: a plain floating panel (bottom right) for trying options out.
-  // To be designed properly (or folded into the eye menu) later.
-  const TOGGLES = [
-    {
-      label: "Badges",
-      options: [["current", "Current"], ["ratings", "Ratings"], ["none", "None"]],
-      get: () => prefs.badgeStyle,
-      set: (v) => setBadgeStyle(v),
-    },
-    {
-      label: "Coffee bar",
-      options: [["open", "Pop open"], ["reset", "Reset"]],
-      get: () => null,
-      set: (v) => {
-        if (v === "open") setBarOpen(true);
-        else {
-          Object.assign(barState, { installedAt: Date.now() - 4 * 864e5, lastAuto: 0, noAuto: false });
-          saveBar();
-          toast("Coffee bar reset: it will pop open on the next page.");
-        }
-      },
-    },
-    {
-      label: "Ring",
-      options: [["on", "On"], ["off", "Off"]],
-      get: () => (prefs.ratingRing ? "on" : "off"),
-      set: (v) => {
-        prefs.ratingRing = v === "on";
-        savePrefs();
-      },
-    },
-    {
-      label: "Rating look",
-      options: [["plain", "3.5"], ["star", "★3.5"], ["half", "Small .5"], ["instar", "In star"], ["stardark", "Dark ★"], ["starcolor", "Color ★"]],
-      get: () => prefs.ratingLook,
-      set: (v) => {
-        prefs.ratingLook = v;
-        savePrefs();
-      },
-    },
-  ];
-  let togglesEl = null;
-  function injectToggles() {
-    if (togglesEl || !document.body) return;
-    togglesEl = document.createElement("div");
-    togglesEl.className = `${NS}-toggles`;
-    togglesEl.innerHTML =
-      `<button type="button" class="${NS}-toggles-open" aria-expanded="false">Letternoxd</button>` +
-      `<div class="${NS}-toggles-panel" hidden>` +
-      TOGGLES.map(
-        (t, i) =>
-          `<div class="${NS}-toggles-row"><span class="${NS}-row-label">${t.label}</span>` +
-          `<span class="${NS}-seg" role="radiogroup" aria-label="${t.label}">` +
-          t.options.map(([v, l]) => `<button type="button" role="radio" data-t="${i}" data-value="${v}">${l}</button>`).join("") +
-          `</span></div>`
-      ).join("") +
-      `</div>`;
-    const open = togglesEl.querySelector(`.${NS}-toggles-open`);
-    const panel = togglesEl.querySelector(`.${NS}-toggles-panel`);
-    togglesEl.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (e.target.closest(`.${NS}-toggles-open`)) {
-        panel.hidden = !panel.hidden;
-        open.setAttribute("aria-expanded", String(!panel.hidden));
-        return;
-      }
-      const b = e.target.closest("button[data-value]");
-      if (!b) return;
-      TOGGLES[b.dataset.t].set(b.dataset.value);
-      renderToggles();
-      renderMenu();
-      applyAll();
-    });
-    document.addEventListener("click", (e) => {
-      if (!panel.hidden && !togglesEl.contains(e.target)) {
-        panel.hidden = true;
-        open.setAttribute("aria-expanded", "false");
-      }
-    });
-    document.body.append(togglesEl);
-    renderToggles();
-  }
-  function renderToggles() {
-    togglesEl?.querySelectorAll("button[data-value]").forEach((b) => {
-      b.setAttribute("aria-checked", String(TOGGLES[b.dataset.t].get() === b.dataset.value));
-    });
-  }
-
   // ================================================================ "N hidden" note
   function updateHiddenNote() {
     const hidden = document.querySelectorAll(`.${NS}-hidden`);
@@ -1473,7 +1357,7 @@
       }
     });
   }
-  const OWN = `.${NS}-ind, .${NS}-ring, .${NS}-corner, .${NS}-badges, .${NS}-rate, .${NS}-panel-ni, .${NS}-note, .${NS}-toggles, .${NS}-bar`;
+  const OWN = `.${NS}-ind, .${NS}-ring, .${NS}-corner, .${NS}-badges, .${NS}-rate, .${NS}-panel-ni, .${NS}-note, .${NS}-bar`;
 
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
@@ -1566,7 +1450,6 @@
     } else if (e.key === PREFS_KEY) {
       Object.assign(prefs, readJSON(PREFS_KEY, {}));
       renderMenu();
-      renderToggles();
       applyAll();
     }
   });
@@ -1582,7 +1465,6 @@
     // Our Watched row replaces Letterboxd's "Fade watched films" switch.
     if (watchedFadeOn()) setWatchedFade(false);
     injectMenu();
-    injectToggles();
     injectBar();
     applyAll();
     observer.observe(document.body, {
