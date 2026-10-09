@@ -548,13 +548,8 @@
     '<path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.8l-5.4 3 1.2-6.1-4.5-4.2 6.1-.7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'
   );
   const BADGE_ICON = { loved: ICON_HEART, seen: ICON_EYE, watchlist: ICON_CLOCK, "watchlist-faded": ICON_CLOCK };
-  // A rating as badge text: 4, or 3 hugging a small, top-aligned .5.
-  const ratingLabel = (rating) => {
-    if (!(rating > 0)) return "";
-    if (!(rating % 1)) return String(rating);
-    const whole = Math.floor(rating);
-    return whole ? `${whole}<span class="${NS}-half">.5</span>` : ".5";
-  };
+  // A rating as badge text: 4 or 3.5.
+  const ratingLabel = (rating) => (rating > 0 ? String(rating % 1 ? rating.toFixed(1) : rating) : "");
   // One badge's markup. "num-seen" / "num-loved" show the rating number;
   // "star-seen" / "star-loved" an outlined star; the rest an icon.
   const badgeHTML = (rating) => (k) => {

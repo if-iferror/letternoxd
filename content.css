@@ -608,16 +608,6 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   padding: 5px;
 }
 
-/* Half-star ratings: the whole number hugging a small, top-aligned .5. */
-.lbni-half {
-  font-size: 0.68em; /* noticeably smaller than the whole number */
-  font-weight: 600; /* semi-bold: a step down from the bold whole number */
-  /* Top-aligned with the whole number rather than sitting on its baseline. */
-  display: inline-block;
-  line-height: 1;
-  vertical-align: top;
-}
-
 /* ---- Feedback & coffee bar: drops down from the top of the window ---- */
 .lbni-bar {
   position: fixed;
