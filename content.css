@@ -576,7 +576,10 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-badge-num {
   align-items: center;
   justify-content: center;
-  padding: 0;
+  width: auto;
+  min-width: 28px;
+  padding: 0 7px;
+  border-radius: 999px;
   font: 700 12px/1 -apple-system, BlinkMacSystemFont, Graphik, sans-serif;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
@@ -593,8 +596,14 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   padding: 6px;
 }
 .lbni-small > .lbni-badges > .lbni-badge-num {
-  padding: 0;
+  width: auto;
+  min-width: 22px;
+  padding: 0 5px;
   font-size: 10px;
+}
+/* Badges stack in a column; keep pills left-aligned, not stretched. */
+.lbni-badges {
+  align-items: flex-start;
 }
 .lbni-small > .lbni-badges > .lbni-badge-star {
   padding: 5px;
