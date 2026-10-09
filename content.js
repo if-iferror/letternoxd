@@ -1217,6 +1217,98 @@
     });
   }
 
+  // ================================================================ feedback & coffee bar
+  // A small tab on the right edge, just under Letterboxd's header. It opens
+  // a bar with a feedback box and a "Buy me a coffee" link. It pops open on
+  // its own now and then (at most once a week, never in the first few days);
+  // the × stops that for good, but the tab always stays.
+  const BAR_KEY = `${NS}:bar`;
+  const FEEDBACK_KEY = `${NS}:feedback-outbox`;
+  const COFFEE_URL = "https://www.buymeacoffee.com/"; // TODO: real link
+  const BAR_GRACE_MS = 3 * 864e5; // no pop-ups in the first 3 days
+  const BAR_EVERY_MS = 7 * 864e5; // then at most once a week
+  const barState = { installedAt: 0, lastAuto: 0, noAuto: false, open: false, ...readJSON(BAR_KEY, {}) };
+  if (!barState.installedAt) barState.installedAt = Date.now();
+  const saveBar = () => writeJSON(BAR_KEY, barState);
+  const ICON_CUP = svg(
+    "0 0 24 24",
+    '<path d="M4 9h12v5.5A4.5 4.5 0 0 1 11.5 19h-3A4.5 4.5 0 0 1 4 14.5z" fill="currentColor"/><path d="M16 10.5h1.6a2.4 2.4 0 0 1 0 4.8H16" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3.5c-.7.9-.7 1.8 0 2.7M11.5 3.5c-.7.9-.7 1.8 0 2.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'
+  );
+  const THANKS = [
+    "Got it. Thank you!",
+    "Received. Pinned to the fridge.",
+    "Noted. Insults are filed under “motivation”.",
+    "Thanks! A real human will read this.",
+  ];
+  let barEl = null;
+
+  function injectBar() {
+    if (barEl || !document.body) return;
+    const now = Date.now();
+    if (!barState.noAuto && now - barState.installedAt > BAR_GRACE_MS && now - (barState.lastAuto || 0) > BAR_EVERY_MS) {
+      barState.lastAuto = now;
+      barState.open = true;
+    }
+    saveBar();
+
+    barEl = document.createElement("aside");
+    barEl.className = `${NS}-bar`;
+    barEl.setAttribute("aria-label", "Letternoxd feedback");
+    barEl.innerHTML =
+      `<button type="button" class="${NS}-bar-tab" aria-expanded="false" title="Feedback &amp; coffee">${ICON_CUP}</button>` +
+      `<div class="${NS}-bar-body">` +
+      `<form class="${NS}-bar-form"><input class="${NS}-bar-input" type="text" maxlength="2000" autocomplete="off" ` +
+      `placeholder="Feedback? Suggestions? Insults? Type here and hit enter" aria-label="Send feedback about Letternoxd"></form>` +
+      `<a class="${NS}-bar-coffee" href="${COFFEE_URL}" target="_blank" rel="noopener noreferrer">${ICON_CUP}<span>Buy me a coffee</span></a>` +
+      `<button type="button" class="${NS}-bar-collapse" title="Hide" aria-label="Hide">${svg("0 0 24 24", '<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>')}</button>` +
+      `<button type="button" class="${NS}-bar-dismiss" title="Don't pop open on its own again (the tab stays)" aria-label="Don't pop open again">${svg("0 0 24 24", '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>')}</button>` +
+      `</div>`;
+
+    const input = barEl.querySelector(`.${NS}-bar-input`);
+    barEl.querySelector(`.${NS}-bar-tab`).addEventListener("click", () => setBarOpen(true, true));
+    barEl.querySelector(`.${NS}-bar-collapse`).addEventListener("click", () => setBarOpen(false));
+    barEl.querySelector(`.${NS}-bar-dismiss`).addEventListener("click", () => {
+      barState.noAuto = true;
+      setBarOpen(false);
+      toast("Okay, it won't pop up again. The little tab stays if you need it.");
+    });
+    // Keep Letterboxd's keyboard shortcuts out of the text box.
+    input.addEventListener("keydown", (e) => e.stopPropagation());
+    input.addEventListener("keyup", (e) => e.stopPropagation());
+    input.addEventListener("keypress", (e) => e.stopPropagation());
+    barEl.querySelector(`.${NS}-bar-form`).addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      sendFeedback(text);
+      input.value = "";
+      const was = input.placeholder;
+      input.placeholder = THANKS[Math.floor(Math.random() * THANKS.length)];
+      input.blur();
+      setTimeout(() => (input.placeholder = was), 4000);
+    });
+    document.body.append(barEl);
+    setBarOpen(barState.open);
+  }
+
+  function setBarOpen(open, focus = false) {
+    barState.open = open;
+    saveBar();
+    if (!barEl) return;
+    barEl.dataset.open = String(open);
+    barEl.querySelector(`.${NS}-bar-tab`).setAttribute("aria-expanded", String(open));
+    if (open && focus) barEl.querySelector(`.${NS}-bar-input`).focus();
+  }
+
+  // TODO: send somewhere real. For now feedback is kept in this browser only
+  // (localStorage), so nothing leaves your computer.
+  function sendFeedback(text) {
+    const box = readJSON(FEEDBACK_KEY, []);
+    box.push({ at: new Date().toISOString(), page: location.pathname, text });
+    writeJSON(FEEDBACK_KEY, box.slice(-50));
+    console.info("[Letternoxd] feedback (kept locally for now):", text);
+  }
+
   // ================================================================ temporary toggles menu
   // TEMPORARY: a plain floating panel (bottom right) for trying options out.
   // To be designed properly (or folded into the eye menu) later.
@@ -1226,6 +1318,19 @@
       options: [["current", "Current"], ["ratings", "Ratings"], ["none", "None"]],
       get: () => prefs.badgeStyle,
       set: (v) => setBadgeStyle(v),
+    },
+    {
+      label: "Coffee bar",
+      options: [["open", "Pop open"], ["reset", "Reset"]],
+      get: () => null,
+      set: (v) => {
+        if (v === "open") setBarOpen(true);
+        else {
+          Object.assign(barState, { installedAt: Date.now() - 4 * 864e5, lastAuto: 0, noAuto: false });
+          saveBar();
+          toast("Coffee bar reset: it will pop open on the next page.");
+        }
+      },
     },
     {
       label: "Rating look",
@@ -1338,7 +1443,7 @@
       }
     });
   }
-  const OWN = `.${NS}-ind, .${NS}-ring, .${NS}-corner, .${NS}-badges, .${NS}-rate, .${NS}-panel-ni, .${NS}-note, .${NS}-toggles`;
+  const OWN = `.${NS}-ind, .${NS}-ring, .${NS}-corner, .${NS}-badges, .${NS}-rate, .${NS}-panel-ni, .${NS}-note, .${NS}-toggles, .${NS}-bar`;
 
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
@@ -1448,6 +1553,7 @@
     if (watchedFadeOn()) setWatchedFade(false);
     injectMenu();
     injectToggles();
+    injectBar();
     applyAll();
     observer.observe(document.body, {
       childList: true,
