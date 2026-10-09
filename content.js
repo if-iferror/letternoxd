@@ -1234,6 +1234,11 @@
     "0 0 24 24",
     '<path d="M4 9h12v5.5A4.5 4.5 0 0 1 11.5 19h-3A4.5 4.5 0 0 1 4 14.5z" fill="currentColor"/><path d="M16 10.5h1.6a2.4 2.4 0 0 1 0 4.8H16" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3.5c-.7.9-.7 1.8 0 2.7M11.5 3.5c-.7.9-.7 1.8 0 2.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'
   );
+  const ICON_MEGAPHONE = svg(
+    "0 0 24 24",
+    '<path d="M3.5 10.2v3.6a1 1 0 0 0 1 1h2.1l1.3 4.3a1 1 0 0 0 1 .7h1.2a.8.8 0 0 0 .8-1l-1.1-4h.6l7.1 3.6V5.6L9.4 9.2H4.5a1 1 0 0 0-1 1z" fill="currentColor"/>' +
+      '<path d="M20.2 9.6v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'
+  );
   const THANKS = [
     "Got it. Thank you!",
     "Received. Pinned to the fridge.",
@@ -1255,13 +1260,15 @@
     barEl.className = `${NS}-bar`;
     barEl.setAttribute("aria-label", "Letternoxd feedback");
     barEl.innerHTML =
-      `<button type="button" class="${NS}-bar-tab" aria-expanded="false" title="Feedback &amp; coffee">${ICON_CUP}</button>` +
+      `<button type="button" class="${NS}-bar-tab" aria-expanded="false" title="Feedback &amp; coffee">${ICON_MEGAPHONE}</button>` +
       `<div class="${NS}-bar-body">` +
-      `<form class="${NS}-bar-form"><input class="${NS}-bar-input" type="text" maxlength="2000" autocomplete="off" ` +
-      `placeholder="Feedback? Suggestions? Insults? Type here and hit enter" aria-label="Send feedback about Letternoxd"></form>` +
-      `<a class="${NS}-bar-coffee" href="${COFFEE_URL}" target="_blank" rel="noopener noreferrer">${ICON_CUP}<span>Buy me a coffee</span></a>` +
       `<button type="button" class="${NS}-bar-collapse" title="Hide" aria-label="Hide">${svg("0 0 24 24", '<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>')}</button>` +
-      `<button type="button" class="${NS}-bar-dismiss" title="Don't pop open on its own again (the tab stays)" aria-label="Don't pop open again">${svg("0 0 24 24", '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>')}</button>` +
+      `<form class="${NS}-bar-form"><input class="${NS}-bar-input" type="text" maxlength="2000" autocomplete="off" ` +
+      `placeholder="Feedback? Suggestions? Insults? Type here and hit enter." aria-label="Send feedback about Letternoxd"></form>` +
+      `<span class="${NS}-bar-spacer"></span>` +
+      `<span class="${NS}-bar-enjoy">Enjoying letternøxd?</span>` +
+      `<a class="${NS}-bar-coffee" href="${COFFEE_URL}" target="_blank" rel="noopener noreferrer">${ICON_CUP}<span>Buy me a coffee</span></a>` +
+      `<button type="button" class="${NS}-bar-dismiss" title="Hide, and don't pop open on its own again (the tab stays)" aria-label="Hide and don't pop open again">${svg("0 0 24 24", '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>')}</button>` +
       `</div>`;
 
     const input = barEl.querySelector(`.${NS}-bar-input`);
@@ -1270,7 +1277,6 @@
     barEl.querySelector(`.${NS}-bar-dismiss`).addEventListener("click", () => {
       barState.noAuto = true;
       setBarOpen(false);
-      toast("Okay, it won't pop up again. The little tab stays if you need it.");
     });
     // Keep Letterboxd's keyboard shortcuts out of the text box.
     input.addEventListener("keydown", (e) => e.stopPropagation());

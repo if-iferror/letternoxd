@@ -773,7 +773,7 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   padding: 4px 11px 5px;
   border-radius: 0 0 7px 7px;
   background: #2c3440;
-  color: #ffdd00;
+  color: #def;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
   opacity: 0.8;
   transition: height 0.15s ease, opacity 0.15s ease;
@@ -794,9 +794,8 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   right: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 10px;
-  padding: 8px 16px;
+  padding: 8px 4px;
   background: #2c3440;
   border-bottom: 1px solid #456;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -814,6 +813,14 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   .lbni-bar[data-open="true"] .lbni-bar-body {
     transition: none;
   }
+}
+.lbni-bar-spacer {
+  flex: 1 1 0;
+}
+.lbni-bar-enjoy {
+  flex: none;
+  color: #9ab;
+  white-space: nowrap;
 }
 .lbni-bar-form {
   flex: 0 1 520px;
@@ -879,6 +886,11 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-bar-dismiss:hover {
   background: #456;
   color: #fff;
+}
+@media (max-width: 760px) {
+  .lbni-bar-enjoy {
+    display: none;
+  }
 }
 @media (max-width: 640px) {
   .lbni-bar-coffee span {
