@@ -565,7 +565,7 @@
     if (look === "half" || look === "stardark" || look === "starcolor") {
       if (!(rating % 1)) return String(rating);
       const whole = Math.floor(rating);
-      // A hair of space between the whole number and a small, top-aligned .5.
+      // The whole number hugging a small, top-aligned .5.
       return whole ? `${whole}<span class="${NS}-half">.5</span>` : ".5";
     }
     return String(rating % 1 ? rating.toFixed(1) : rating);
