@@ -69,8 +69,11 @@
     savePrefs();
   };
   // How a rating number looks in the "ratings" style: "plain" (3.5),
-  // "star" (★3.5), "half" (3½) or "instar" (the number inside a star).
-  const RATING_LOOKS = ["plain", "star", "half", "instar"];
+  // "star" (★3.5), "half" (3½), or the number inside a star: "instar"
+  // (dark, outlined), "stardark" (solid dark grey, coloured number) or
+  // "starcolor" (solid green / orange, dark number).
+  const RATING_LOOKS = ["plain", "star", "half", "instar", "stardark", "starcolor"];
+  const IN_STAR = ["instar", "stardark", "starcolor"];
   if (!RATING_LOOKS.includes(prefs.ratingLook)) prefs.ratingLook = "plain";
   const savePrefs = () => writeJSON(PREFS_KEY, prefs);
 
@@ -548,7 +551,7 @@
   // A rating as text, in the chosen look: 3.5 / 3½.
   const ratingLabel = (rating, look) => {
     if (!(rating > 0)) return "";
-    if (look === "half") return rating % 1 ? `${Math.floor(rating) || ""}½` : String(rating);
+    if (look === "half" || look === "stardark" || look === "starcolor") return rating % 1 ? `${Math.floor(rating) || ""}½` : String(rating);
     return String(rating % 1 ? rating.toFixed(1) : rating);
   };
   // One badge's markup. "num-seen" / "num-loved" show the rating number;
@@ -558,8 +561,9 @@
     if (type === "num") {
       const look = prefs.ratingLook;
       const text = `<span class="${NS}-num">${ratingLabel(rating, look)}</span>`;
-      const extra = look === "star" || look === "instar" ? ICON_STAR_SOLID : "";
-      return `<span class="${NS}-badge ${NS}-badge-num ${NS}-look-${look} ${NS}-badge-${tone}">${extra}${text}</span>`;
+      const inStar = IN_STAR.includes(look);
+      const extra = look === "star" || inStar ? ICON_STAR_SOLID : "";
+      return `<span class="${NS}-badge ${NS}-badge-num ${NS}-look-${look}${inStar ? ` ${NS}-instar` : ""} ${NS}-badge-${tone}">${extra}${text}</span>`;
     }
     if (type === "star") return `<span class="${NS}-badge ${NS}-badge-star ${NS}-badge-${tone}">${ICON_STAR}</span>`;
     return `<span class="${NS}-badge ${NS}-badge-${k}">${BADGE_ICON[k]}</span>`;
@@ -1220,7 +1224,7 @@
     },
     {
       label: "Rating look",
-      options: [["plain", "3.5"], ["star", "★3.5"], ["half", "3½"], ["instar", "In star"]],
+      options: [["plain", "3.5"], ["star", "★3.5"], ["half", "3½"], ["instar", "In star"], ["stardark", "Dark ★"], ["starcolor", "Color ★"]],
       get: () => prefs.ratingLook,
       set: (v) => {
         prefs.ratingLook = v;

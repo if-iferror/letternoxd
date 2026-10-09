@@ -673,7 +673,7 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   height: 0.78em;
 }
 /* In star: a dark solid star as the badge, the number on top. */
-.lbni-badges > .lbni-look-instar {
+.lbni-badges > .lbni-instar {
   position: relative;
   width: 34px;
   min-width: 0;
@@ -685,7 +685,7 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   box-shadow: none;
   font-size: 9.5px;
 }
-.lbni-badges > .lbni-look-instar svg {
+.lbni-badges > .lbni-instar svg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -693,7 +693,7 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
   color: rgba(20, 24, 28, 0.86);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
-.lbni-badges > .lbni-look-instar .lbni-num {
+.lbni-badges > .lbni-instar .lbni-num {
   position: relative;
 }
 /* Outline the star in the badge colour so its shape reads on any poster. */
@@ -706,7 +706,7 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-badges > .lbni-look-instar.lbni-badge-loved svg path {
   stroke: #ff8000;
 }
-.lbni-small > .lbni-badges > .lbni-look-instar {
+.lbni-small > .lbni-badges > .lbni-instar {
   width: 28px;
   min-width: 0;
   height: 28px;
@@ -715,4 +715,19 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 }
 .lbni-toggles-row .lbni-row-label {
   flex-basis: 76px;
+}
+
+/* Dark ★: solid dark star, coloured number (no outline). */
+.lbni-badges > .lbni-look-stardark svg {
+  color: rgba(20, 24, 28, 0.9);
+}
+/* Color ★: solid green / orange star, dark number. */
+.lbni-badges > .lbni-look-starcolor.lbni-badge-seen svg {
+  color: #00e054;
+}
+.lbni-badges > .lbni-look-starcolor.lbni-badge-loved svg {
+  color: #ff8000;
+}
+.lbni-badges > .lbni-look-starcolor .lbni-num {
+  color: #14181c;
 }
