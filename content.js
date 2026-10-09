@@ -648,7 +648,7 @@
     // Keep this poster's buttons in step.
     const ni = item.querySelector(`:scope > .${NS}-btn-ni`);
     if (ni) setNiButton(ni, marked);
-    const wl = item.querySelector(`:scope > .${NS}-btn-wl`);
+    const wl = wlButtonOf(item);
     if (wl) setWlButton(wl, st.inWatchlist);
   }
 
@@ -745,6 +745,7 @@
     if (width && width < 100) item.classList.add(`${NS}-small`);
     if (width >= 200) item.classList.add(`${NS}-large`);
     item.append(wl, ni);
+    item._lbniWl = wl; // it may move into Letterboxd's hover bar (see swapIntoBar)
 
     if (gridItemOf(poster)) {
       const more = document.createElement("button");
@@ -765,19 +766,25 @@
     }
   }
 
-  // Put the watchlist button exactly where Letterboxd's "…" sits in its hover
-  // bar (that "…" is hidden; ours in the top-left opens it).
+  // The watchlist button, wherever it currently is (in the item, or inside
+  // Letterboxd's hover bar).
+  const wlButtonOf = (item) => item._lbniWl || item.querySelector(`.${NS}-btn-wl`);
+
+  // Put the watchlist button INSIDE Letterboxd's hover bar, exactly where its
+  // "…" sits (that "…" is hidden; ours in the top-left opens it). Being part
+  // of the bar means hovering it keeps the bar open, just like the eye and
+  // heart: Letterboxd hides the bar as soon as the pointer leaves the poster.
   function swapIntoBar(item) {
-    const link = item.querySelector(".overlay-actions .menu-link");
-    const wl = item.querySelector(`:scope > .${NS}-btn-wl`);
+    const bar = item.querySelector(".overlay-actions");
+    const link = bar?.querySelector(".menu-link");
+    const wl = wlButtonOf(item);
     if (!link || !wl) return false;
-    const lr = link.getBoundingClientRect();
-    if (!lr.width || !lr.height) return false;
-    const ir = item.getBoundingClientRect();
-    wl.style.left = `${lr.left - ir.left}px`;
-    wl.style.top = `${lr.top - ir.top}px`;
-    wl.style.width = `${lr.width}px`;
-    wl.style.height = `${lr.height}px`;
+    if (wl.parentElement !== bar) bar.append(wl); // also re-adds it if Letterboxd redrew the bar
+    if (!link.offsetWidth || !link.offsetHeight) return false; // bar still hidden; try again shortly
+    wl.style.left = `${link.offsetLeft}px`;
+    wl.style.top = `${link.offsetTop}px`;
+    wl.style.width = `${link.offsetWidth}px`;
+    wl.style.height = `${link.offsetHeight}px`;
     item.classList.add(`${NS}-swap`);
     return true;
   }
@@ -878,7 +885,7 @@
     watchlistState.set(lid, state);
     document.querySelectorAll(`.${NS}-btn-wl[data-lid='${CSS.escape(lid)}']`).forEach((b) => {
       setWlButton(b, state);
-      b.parentElement?.querySelector("[data-in-watchlist]")?.setAttribute("data-in-watchlist", String(state));
+      (b.closest(GRID_ITEM_SELECTOR) || b.parentElement)?.querySelector("[data-in-watchlist]")?.setAttribute("data-in-watchlist", String(state));
     });
   }
 

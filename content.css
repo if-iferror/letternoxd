@@ -84,25 +84,37 @@
 .lbni-swap .overlay-actions .menu-link {
   visibility: hidden;
 }
-.lbni-host.lbni-swap > .lbni-btn-wl {
-  z-index: 25;
+/* The watchlist button lives INSIDE the hover bar (a third icon beside the
+   eye and heart), so it shows and hides with the bar and hovering it keeps
+   the bar open. Positioned over the hidden "…" by script. */
+.overlay-actions > .lbni-btn-wl {
+  position: absolute;
+  z-index: 1;
   padding: 0;
   border-radius: 0;
   background: none;
   box-shadow: none;
+  opacity: 1;
+  pointer-events: auto;
   color: #fff; /* as white as Letterboxd's eye and heart */
+  transition: none;
 }
 /* clock circle 14px, about the height of Letterboxd's heart */
-.lbni-host.lbni-swap > .lbni-btn-wl svg {
+.overlay-actions > .lbni-btn-wl svg {
   flex: none;
   width: 17.3px;
   height: 17.3px;
 }
-.lbni-host.lbni-swap > .lbni-btn-wl:hover {
+/* Same hover as Letterboxd's eye and heart: light blue-grey when off,
+   unchanged when on. */
+.overlay-actions > .lbni-btn-wl:hover {
   background: none;
-  color: #fff;
+  color: #c9d8e8;
 }
-
+.overlay-actions > .lbni-btn-wl.lbni-on,
+.overlay-actions > .lbni-btn-wl.lbni-on:hover {
+  color: #40bcf4;
+}
 /* Small posters (~70px wide). */
 .lbni-small > .lbni-corner,
 .lbni-small > .lbni-badges > .lbni-badge {
@@ -157,8 +169,7 @@
 .lbni-btn-ni:not(.lbni-on) {
   color: #fff;
 }
-.lbni-btn-wl.lbni-on,
-.lbni-swap > .lbni-btn-wl.lbni-on {
+.lbni-btn-wl.lbni-on {
   color: #40bcf4;
 }
 .lbni-btn-wl .lbni-minus,
