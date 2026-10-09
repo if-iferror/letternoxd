@@ -447,7 +447,7 @@
   // On the home page: a strip that shows the front display and walks you in.
   function addHomeStrip() {
     if (location.pathname !== "/" || document.querySelector(".lbs-home")) return;
-    const host = document.querySelector("#content .content-wrap, #content");
+    const host = document.querySelector("#content .content-wrap") || document.querySelector("#content");
     if (!host) return;
     const strip = h("section", "lbs-home");
     strip.innerHTML =
@@ -457,7 +457,10 @@
       `<span class="lbs-home-sub">${SHELVES.length + 1} shelves, every film in one place. Walk in →</span>` +
       `</a>`;
     strip.querySelector("a").addEventListener("click", enterStore);
-    host.prepend(strip);
+    // Just under "Welcome back…", above your friends' activity.
+    const hero = host.querySelector(":scope > .title-hero");
+    if (hero) hero.after(strip);
+    else host.prepend(strip);
   }
 
   function boot() {
