@@ -1,18 +1,22 @@
 /*
- * Letternoxd Video Store (prototype: the Horror aisle, Main wing).
+ * Letternoxd Video Store (prototype: the Horror wing, Main collection).
  *
- * Opens over any Letterboxd page at #store, laid out as one physical aisle:
- * sections stand side by side (A-Z by name, "Everything Else" last), each with
- * a laminated sign and several shelves of films filed A-Z by title. Scrolling
- * walks the aisle, so every shelf moves together.
+ * Opens over any Letterboxd page at #store, laid out like a real store:
+ *   WING    Horror. One long wall you walk along.
+ *   AISLE   '80s Horror, Zombies... Side by side, A-Z, "Everything Else" last.
+ *           A wooden sign along the top, repeating as you walk.
+ *   SHELF   One subcategory per shelf row (Classic Zombies, Zombie Comedies...),
+ *           filed A-Z by title, labelled with taped laminated tags on the shelf
+ *           edge, repeating. When a subcategory runs out, the next one starts
+ *           to its right on that same shelf.
  *
- * Every section is a Letterboxd browse query. A film sits in exactly one
- * section: the most specific one it fits, in SHELF_PRIORITY order; whatever is
- * left goes to "Everything Else". The end cap (popular this week) may repeat. Only the Main wing is stocked here: films ranked in
- * the top 9,360 of Horror by popularity (about 1,000+ watches).
+ * A film sits in exactly one aisle (the most specific it fits, in
+ * AISLE_PRIORITY order) and exactly one shelf in it (the first SHELF_RULES
+ * rule it matches). Only the end cap ("Popular This Week") may repeat.
  *
- * The stock list is built once (about 230 small page reads) and kept for a
- * week in localStorage. Posters load as their shelf scrolls into view.
+ * Main collection = Horror's top 9,360 by Letterboxd popularity (about 1,000+
+ * watches). Everything comes from Letterboxd's browse pages, read once a week
+ * and kept in localStorage. Posters load as you walk up to them.
  */
 (() => {
   "use strict";
@@ -20,37 +24,69 @@
   window.__lbniStore = true;
 
   const NS = "lbni";
-  const CACHE_KEY = `${NS}:store:horror:v1`;
+  const CACHE_KEY = `${NS}:store:horror:v2`;
+  const OLD_KEYS = [`${NS}:store:horror:v1`];
   const POSTER_KEY = `${NS}:store:posters`;
   const CACHE_MS = 7 * 864e5;
   const PER_PAGE = 72;
   const MAIN_PAGES = 130; // ranks 1-9,360
-  const WINGS = [
+  const COLLECTIONS = [
     { id: "main", name: "Main", count: 9360, open: true },
     { id: "obscure", name: "Obscure", count: 15480, open: false },
     { id: "ultra", name: "Ultra-obscure", count: 53002, open: false },
   ];
 
-  // Display order. `q` is the Letterboxd browse path.
-  const SHELVES = [
-    { id: "slashers", name: "Slashers", q: "genre/horror/mini-theme/killing-slasher-gruesome-gory-bloody" },
-    { id: "haunted", name: "Haunted & Supernatural", q: "genre/horror/mini-theme/supernatural-chilling-eerie-terrifying-dread" },
-    { id: "creepy", name: "Creepy & Chilling", q: "genre/horror/mini-theme/chilling-eerie-terrifying-terror-frighten" },
-    { id: "gothic", name: "Gothic", q: "genre/horror/mini-theme/eerie-blood-gothic-mysterious-bizarre" },
-    { id: "vampires", name: "Vampires", q: "genre/horror/mini-theme/vampires-blood-undead-cool-bloody" },
-    { id: "zombies", name: "Zombies & Survival", q: "genre/horror/mini-theme/zombies-undead-flesh-blood-infected" },
-    { id: "creature", name: "Creature Features", q: "genre/horror/mini-theme/creature-monster-scary-horror-suspense" },
-    { id: "madsci", name: "Mad Science & Classic Monsters", q: "genre/horror/mini-theme/scientist-monster-doctor-experiment-creature" },
-    { id: "extreme", name: "Extreme", q: "genre/horror/mini-theme/cannibals-gruesome-graphic-shock-gory" },
-    { id: "giallo", name: "Giallo", q: "genre/horror/country/italy/decade/1970s" },
-    { id: "eighties", name: "’80s Horror", q: "genre/horror/decade/1980s" },
-    { id: "jhorror", name: "J-Horror", q: "genre/horror/country/japan" },
-    { id: "comedy", name: "Horror-Comedy", q: "genre/horror+comedy" },
-  ];
-  // Which shelf wins when a film fits several: the most specific first.
-  const SHELF_PRIORITY = ["giallo", "jhorror", "vampires", "zombies", "madsci", "extreme", "creature", "slashers", "gothic", "haunted", "creepy", "eighties", "comedy"];
-  const EVERYTHING = { id: "rest", name: "Everything Else", q: "genre/horror" };
+  /* ---------------- the floor plan ---------------- */
 
+  // Aisles. `q` is the Letterboxd browse path; one/many name the shelves.
+  const AISLES = [
+    { id: "slashers", name: "Slashers", q: "genre/horror/mini-theme/killing-slasher-gruesome-gory-bloody", one: "Slasher", many: "Slashers" },
+    { id: "haunted", name: "Haunted & Supernatural", q: "genre/horror/mini-theme/supernatural-chilling-eerie-terrifying-dread", one: "Ghost Story", many: "Ghost Stories" },
+    { id: "creepy", name: "Creepy & Chilling", q: "genre/horror/mini-theme/chilling-eerie-terrifying-terror-frighten", one: "Chiller", many: "Chillers" },
+    { id: "gothic", name: "Gothic", q: "genre/horror/mini-theme/eerie-blood-gothic-mysterious-bizarre", one: "Gothic", many: "Gothic Horror" },
+    { id: "vampires", name: "Vampires", q: "genre/horror/mini-theme/vampires-blood-undead-cool-bloody", one: "Vampire", many: "Vampires" },
+    { id: "zombies", name: "Zombies & Survival", q: "genre/horror/mini-theme/zombies-undead-flesh-blood-infected", one: "Zombie", many: "Zombies" },
+    { id: "creature", name: "Creature Features", q: "genre/horror/mini-theme/creature-monster-scary-horror-suspense", one: "Creature", many: "Creature Features" },
+    { id: "madsci", name: "Mad Science & Classic Monsters", q: "genre/horror/mini-theme/scientist-monster-doctor-experiment-creature", one: "Mad Science", many: "Mad Science" },
+    { id: "extreme", name: "Extreme", q: "genre/horror/mini-theme/cannibals-gruesome-graphic-shock-gory", one: "Extreme", many: "Extreme Horror" },
+    { id: "giallo", name: "Giallo", q: "genre/horror/country/italy/decade/1970s", one: "Giallo", many: "Gialli", decade: 1970, noWorld: true },
+    { id: "eighties", name: "’80s Horror", q: "genre/horror/decade/1980s", one: "’80s Horror", many: "’80s Horror", decade: 1980 },
+    { id: "jhorror", name: "J-Horror", q: "genre/horror/country/japan", one: "J-Horror", many: "J-Horror", noWorld: true },
+    { id: "comedy", name: "Horror-Comedy", q: "genre/horror+comedy", one: "Horror-Comedy", many: "Horror-Comedies", noComedy: true },
+  ];
+  // Which aisle wins when a film fits several: the most specific first.
+  const AISLE_PRIORITY = ["giallo", "jhorror", "vampires", "zombies", "madsci", "extreme", "creature", "slashers", "gothic", "haunted", "creepy", "eighties", "comedy"];
+  const EVERYTHING = { id: "rest", name: "Everything Else", q: "genre/horror", one: "Horror", many: "Horror" };
+
+  // Tags read for every film, used to split aisles into shelves.
+  const WORLD = ["japan", "south-korea", "france", "italy", "spain", "germany", "mexico", "india", "thailand", "hong-kong", "china", "taiwan", "indonesia", "philippines", "brazil", "argentina", "sweden", "norway", "denmark", "finland", "poland", "russia", "turkey", "iran", "belgium", "netherlands"];
+  const TAGS = [
+    ...["comedy", "science-fiction", "action", "thriller", "drama", "fantasy", "mystery", "romance", "animation", "crime"].map((g) => ({ id: g, q: `genre/horror+${g}` })),
+    ...WORLD.map((c) => ({ id: "world", q: `genre/horror/country/${c}` })),
+  ];
+
+  // Shelves inside each aisle. A film goes on the FIRST rule it matches
+  // (genre blends first, then era); shelves show in `order` from the top.
+  // A rule matching fewer than MIN_SHELF films is dropped and its films fall
+  // through to the next rule.
+  const MIN_SHELF = 4;
+  const era = (y, a, b) => y >= a && y < b;
+  const SHELF_RULES = [
+    { id: "anim", order: 12, name: (a) => `Animated ${a.many}`, test: (f) => f.tags.has("animation") },
+    { id: "comedy", order: 5, name: (a) => `${a.one} Comedies`, test: (f, a) => !a.noComedy && f.tags.has("comedy") },
+    { id: "romance", order: 10, name: (a) => `${a.one} Romance`, test: (f) => f.tags.has("romance") },
+    { id: "scifi", order: 6, name: (a) => `Sci-Fi ${a.many}`, test: (f) => f.tags.has("science-fiction") },
+    { id: "action", order: 7, name: (a) => `${a.one} Action`, test: (f) => f.tags.has("action") },
+    { id: "fantasy", order: 11, name: (a) => `Dark Fantasy ${a.many}`, test: (f) => f.tags.has("fantasy") },
+    { id: "world", order: 9, name: (a) => `World ${a.many}`, test: (f, a) => !a.noWorld && f.tags.has("world") },
+    // Era: decades, or thirds of the decade for a one-decade aisle.
+    { id: "e1", order: 1, name: (a) => (a.decade ? `${a.decade}–${a.decade + 3}` : `Classic ${a.many}`), test: (f, a) => (a.decade ? era(f.year, a.decade, a.decade + 4) : f.year > 0 && f.year < 1970) },
+    { id: "e2", order: 2, name: (a) => (a.decade ? `${a.decade + 4}–${a.decade + 6}` : `’70s & ’80s ${a.many}`), test: (f, a) => (a.decade ? era(f.year, a.decade + 4, a.decade + 7) : era(f.year, 1970, 1990)) },
+    { id: "thrill", order: 8, name: (a) => `${a.one} Thrillers`, test: (f) => f.tags.has("thriller") || f.tags.has("mystery") || f.tags.has("crime") },
+    { id: "drama", order: 13, name: (a) => `${a.one} Dramas`, test: (f) => f.tags.has("drama") },
+    { id: "e3", order: 3, name: (a) => (a.decade ? `${a.decade + 7}–${a.decade + 9}` : `’90s & 2000s ${a.many}`), test: (f, a) => (a.decade ? era(f.year, a.decade + 7, a.decade + 10) : era(f.year, 1990, 2010)) },
+    { id: "e4", order: 4, name: (a) => (a.decade ? `More ${a.many}` : `Modern ${a.many}`), test: () => true },
+  ];
 
   /* ---------------- small helpers ---------------- */
 
@@ -80,7 +116,7 @@
     };
     return (fn) => new Promise((ok, fail) => { queue.push({ fn, ok, fail }); next(); });
   }
-  const pageLimit = limiter(6);
+  const pageLimit = limiter(8);
   const posterLimit = limiter(6);
 
   /* ---------------- reading Letterboxd ---------------- */
@@ -88,7 +124,12 @@
   // One page of a browse query, in popularity order: [{ slug, name }]
   async function readPage(path, page, sort = "by/popular") {
     const url = `/csi/films/films-browser-list/${path}/${sort ? sort + "/" : ""}${page > 1 ? `page/${page}/` : ""}?esiAllowFilters=false`;
-    const res = await pageLimit(() => fetch(url, { credentials: "include" }));
+    let res;
+    for (let tries = 0; tries < 3; tries++) {
+      res = await pageLimit(() => fetch(url, { credentials: "include" }));
+      if (res.ok || res.status === 404) break;
+      await new Promise((r) => setTimeout(r, 800 * (tries + 1)));
+    }
     if (!res.ok) throw new Error(`Letterboxd answered ${res.status}`);
     const doc = new DOMParser().parseFromString(await res.text(), "text/html");
     return [...doc.querySelectorAll("[data-item-slug]")].map((el) => ({
@@ -97,14 +138,29 @@
     }));
   }
 
+  // Every Main-collection film in a query. Same popularity order as the Main
+  // list, so Main films always come first: stop at the first page with none.
+  async function readMembers(q, index, tick) {
+    const got = [];
+    for (let p = 1; p <= 80; p++) {
+      const list = await readPage(q, p);
+      const hits = list.map((f) => index.get(f.slug)).filter((i) => i != null);
+      got.push(...hits);
+      tick(p);
+      if (!hits.length || list.length < PER_PAGE) break;
+    }
+    return got;
+  }
+
   /* ---------------- building the stock list ---------------- */
 
-  let stock = null; // { at, films: [[slug, name]], shelves: { id: [index] }, front: [index|{slug,name}] }
+  let stock = null; // { v, at, films: [[slug, name]], aisles: { id: [i] }, tags: { id: [i] }, front: [[slug, name]] }
   let building = null;
 
   function loadStock() {
+    OLD_KEYS.forEach((k) => { try { localStorage.removeItem(k); } catch {} });
     const s = readJSON(CACHE_KEY, null);
-    if (s && s.v === 1 && Date.now() - s.at < CACHE_MS && Array.isArray(s.films)) return s;
+    if (s && s.v === 2 && Date.now() - s.at < CACHE_MS && Array.isArray(s.films)) return s;
     return null;
   }
 
@@ -112,15 +168,15 @@
     if (building) return building;
     building = (async () => {
       let done = 0;
-      let total = MAIN_PAGES + SHELVES.length * 3; // a guess, refined as shelves finish
-      const tick = () => onProgress && onProgress(Math.min(done / total, 0.99));
+      let total = MAIN_PAGES + AISLES.length * 3 + TAGS.length * 4; // a guess, refined as we go
+      const tick = (p) => {
+        done++;
+        if (p > 3) total++;
+        onProgress && onProgress(Math.min(done / total, 0.99));
+      };
 
-      // 1. The Main wing: Horror's top 130 pages by popularity.
-      const pages = await Promise.all(
-        Array.from({ length: MAIN_PAGES }, (_, i) =>
-          readPage("genre/horror", i + 1).then((films) => { done++; tick(); return films; })
-        )
-      );
+      // 1. The Main collection: Horror's top 130 pages by popularity.
+      const pages = await Promise.all(Array.from({ length: MAIN_PAGES }, (_, i) => readPage("genre/horror", i + 1).then((l) => { tick(0); return l; })));
       const films = [];
       const index = new Map();
       for (const film of pages.flat()) {
@@ -129,46 +185,71 @@
         films.push([film.slug, film.name]);
       }
 
-      // 2. Each shelf: read pages until one has no Main-wing films left.
-      //    (Same popularity order, so Main films always come first.)
-      const members = {};
-      await Promise.all(
-        SHELVES.map(async (shelf) => {
-          const got = [];
-          for (let p = 1; p <= 60; p++) {
-            const list = await readPage(shelf.q, p);
-            done++;
-            const hits = list.map((f) => index.get(f.slug)).filter((i) => i != null);
-            got.push(...hits);
-            if (p > 3) total++;
-            tick();
-            if (!hits.length || list.length < PER_PAGE) break;
-          }
-          members[shelf.id] = got;
-        })
-      );
+      // 2. Aisles and tags, all at once.
+      const [aisleLists, tagLists, front] = await Promise.all([
+        Promise.all(AISLES.map((a) => readMembers(a.q, index, tick))),
+        Promise.all(TAGS.map((t) => readMembers(t.q, index, tick))),
+        readPage("popular/this/week/genre/horror", 1, "").catch(() => []),
+      ]);
 
-      // 3. One place per film: the most specific shelf wins.
+      // 3. One aisle per film: the most specific wins.
+      const members = Object.fromEntries(AISLES.map((a, n) => [a.id, aisleLists[n]]));
       const placed = new Set();
-      const shelves = {};
-      for (const id of SHELF_PRIORITY) {
-        shelves[id] = (members[id] || []).filter((i) => !placed.has(i));
-        shelves[id].forEach((i) => placed.add(i));
+      const aisles = {};
+      for (const id of AISLE_PRIORITY) {
+        aisles[id] = (members[id] || []).filter((i) => !placed.has(i));
+        aisles[id].forEach((i) => placed.add(i));
       }
-      shelves.rest = films.map((_, i) => i).filter((i) => !placed.has(i));
+      aisles.rest = films.map((_, i) => i).filter((i) => !placed.has(i));
 
-      // 4. Front display: what's popular in Horror this week (may repeat shelves).
-      let front = [];
-      try {
-        front = (await readPage("popular/this/week/genre/horror", 1, "")).slice(0, 14).map((f) => [f.slug, f.name]);
-      } catch {}
+      const tags = {};
+      TAGS.forEach((t, n) => { (tags[t.id] = tags[t.id] || []).push(...tagLists[n]); });
 
-      const s = { v: 1, at: Date.now(), films, shelves, front };
+      const s = { v: 2, at: Date.now(), films, aisles, tags, front: front.slice(0, 15).map((f) => [f.slug, f.name]) };
       writeJSON(CACHE_KEY, s);
       onProgress && onProgress(1);
       return s;
     })().finally(() => { building = null; });
     return building;
+  }
+
+  /* ---------------- filing ---------------- */
+
+  const yearOf = (name) => +((String(name).match(/\((\d{4})\)\s*$/) || [])[1] || 0);
+  const titleOf = (name) => String(name).replace(/\s*\(\d{4}\)\s*$/, "");
+  // "The Shining" files under S. Accents ignored, numbers before A.
+  const fileKey = (name) =>
+    titleOf(name)
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/^(the|a|an)\s+/i, "")
+      .replace(/^[^a-z0-9]+/i, "")
+      .toLowerCase();
+  const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
+  const byTitle = (a, b) => collator.compare(fileKey(a[1]), fileKey(b[1])) || yearOf(a[1]) - yearOf(b[1]);
+
+  // Split one aisle's films into shelves.
+  function shelvesFor(aisle, idxs, tagSets) {
+    const films = idxs.map((i) => {
+      const [slug, name] = stock.films[i];
+      const tags = new Set();
+      for (const [t, set] of tagSets) if (set.has(i)) tags.add(t);
+      return { i, slug, name, year: yearOf(name), tags };
+    });
+    let rules = SHELF_RULES.slice();
+    for (;;) {
+      const groups = new Map(rules.map((r) => [r, []]));
+      for (const f of films) {
+        const r = rules.find((r) => r.test(f, aisle));
+        groups.get(r).push(f);
+      }
+      const tiny = rules.find((r) => r.id !== "e4" && groups.get(r).length > 0 && groups.get(r).length < MIN_SHELF);
+      if (tiny) { rules = rules.filter((r) => r !== tiny); continue; }
+      return [...groups]
+        .filter(([, list]) => list.length)
+        .sort(([a], [b]) => a.order - b.order)
+        .map(([r, list]) => ({ id: r.id, name: r.name(aisle), items: list.map((f) => [f.slug, f.name]).sort(byTitle) }));
+    }
   }
 
   /* ---------------- posters ---------------- */
@@ -180,8 +261,7 @@
     clearTimeout(posterSaveTimer);
     posterSaveTimer = setTimeout(() => {
       // Keep the most recent 4,000 so localStorage stays small.
-      const entries = [...posterCache.entries()].slice(-4000);
-      writeJSON(POSTER_KEY, Object.fromEntries(entries));
+      writeJSON(POSTER_KEY, Object.fromEntries([...posterCache.entries()].slice(-4000)));
     }, 1500);
   }
 
@@ -195,27 +275,6 @@
     rememberPoster(slug, urls);
     return urls;
   }
-
-  /* ---------------- filing: A–Z the way a video store does it ---------------- */
-
-  const yearOf = (name) => (String(name).match(/\((\d{4})\)\s*$/) || [])[1] || "";
-  const titleOf = (name) => String(name).replace(/\s*\(\d{4}\)\s*$/, "");
-  // "The Shining" files under S. Accents ignored, numbers before A.
-  const fileKey = (name) =>
-    titleOf(name)
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/^(the|a|an)\s+/i, "")
-      .replace(/^[^a-z0-9]+/i, "")
-      .toLowerCase();
-  const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
-  const byTitle = (a, b) => collator.compare(fileKey(a[1]), fileKey(b[1])) || collator.compare(yearOf(a[1]), yearOf(b[1]));
-  const letterOf = (name) => {
-    const c = fileKey(name).charAt(0).toUpperCase();
-    return /[A-Z]/.test(c) ? c : "#";
-  };
-
-  /* ---------------- posters ---------------- */
 
   const EMPTY = "https://s.ltrbxd.com/static/img/empty-poster-150-DtnLDE3k.png";
   let io = null; // watches posters coming into view as you walk
@@ -244,7 +303,7 @@
       .catch(() => el.classList.add("lbs-noposter"));
   }
 
-  function posterHTML([slug, name]) {
+  function posterHTML([slug, name], tag) {
     const cached = posterCache.get(slug);
     const src = cached ? `src="${esc(cached[0])}" srcset="${esc(cached[0])} 1x, ${esc(cached[1])} 2x"` : `src="${EMPTY}"`;
     return (
@@ -252,15 +311,17 @@
       `<div class="poster film-poster lbs-poster">` +
       `<img class="image" ${src} width="150" height="225" alt="${esc(name)}" decoding="async">` +
       `<a class="frame" href="/film/${esc(slug)}/" title="${esc(name)}"><span class="frame-title">${esc(name)}</span><span class="overlay"></span></a>` +
-      `</div></li>`
+      `</div>` +
+      (tag ? `<span class="lbs-tag"><i></i>${esc(tag)}</span>` : "") +
+      `</li>`
     );
   }
 
   /* ---------------- the store ---------------- */
 
   let root = null;
-  let wing = "main";
-  let aisle = null; // { track, sections: [...], floor }
+  let collection = "main";
+  let walkway = null; // { track, aisles: [el], all: [...] }
 
   const ICON_CLOSE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
   const ICON_LEFT = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -298,15 +359,15 @@
 
   function render() {
     stock = stock || loadStock();
-    const total = stock ? stock.films.length : WINGS[0].count;
+    const total = stock ? stock.films.length : COLLECTIONS[0].count;
     root.innerHTML =
       `<header class="lbs-top">` +
       `<div class="lbs-brand">letternøxd <span>video store</span></div>` +
-      `<div class="lbs-aisle-sign"><b>Horror</b><span>${stock ? `${fmt(total)} films · Main wing` : "Stocking…"}</span></div>` +
-      `<nav class="lbs-wings" aria-label="Wings">` +
-      WINGS.map((w) =>
-        `<button type="button" class="lbs-wing${w.id === wing ? " -on" : ""}${w.open ? "" : " -soon"}" data-wing="${w.id}"${w.open ? "" : ' aria-disabled="true"'}>` +
-        `${w.name} <span>${fmt(w.id === "main" ? total : w.count)}</span>${w.open ? "" : "<em>soon</em>"}</button>`
+      `<div class="lbs-wing-sign"><b>Horror</b><span>wing</span></div>` +
+      `<nav class="lbs-collections" aria-label="Collections">` +
+      COLLECTIONS.map((c) =>
+        `<button type="button" class="lbs-coll${c.id === collection ? " -on" : ""}${c.open ? "" : " -soon"}" data-coll="${c.id}"${c.open ? "" : ' aria-disabled="true"'}>` +
+        `${c.name} <span>${fmt(c.id === "main" ? total : c.count)}</span>${c.open ? "" : "<em>soon</em>"}</button>`
       ).join("") +
       `</nav>` +
       `<button type="button" class="lbs-close" data-act="close" aria-label="Leave the store">${ICON_CLOSE}</button>` +
@@ -314,9 +375,9 @@
       `<div class="lbs-hall"></div>`;
 
     const hall = $(".lbs-hall", root);
-    if (stock) return buildAisle(hall);
+    if (stock) return buildWing(hall);
 
-    const box = h("div", "lbs-loading", `<div class="lbs-meter"><i></i></div><p>Stocking the shelves: reading Horror's top ${fmt(WINGS[0].count)} films from Letterboxd. This happens once a week and takes about half a minute.</p>`);
+    const box = h("div", "lbs-loading", `<div class="lbs-meter"><i></i></div><p>Stocking the shelves: reading Horror's top ${fmt(COLLECTIONS[0].count)} films from Letterboxd and sorting them into aisles and shelves. This happens once a week and takes about a minute.</p>`);
     hall.append(box);
     buildStock((f) => {
       const i = $(".lbs-meter i", root);
@@ -329,30 +390,77 @@
   }
 
   // Sizes that make the shelving fill the height of the window.
-  const SIGN_H = 64; // the laminated sign above each section
-  const LEDGE = 12; // shelf board
+  const HEAD = 64; // the aisle's wooden sign
+  const LIP = 26; // shelf edge, where the laminated tags are taped
   const HEADROOM = 10; // gap between a poster's top and the shelf above
+  const GAP = 8; // between posters
+  const DIVIDER = 30; // between two shelves' worth of films on one row
+  const PAD = 34; // inside the uprights
+  const WOOD_EVERY = 1150; // px between repeats of the aisle sign
+  const TAG_EVERY = 900; // px between repeats of a shelf tag
+
   function geometry(height) {
-    const avail = Math.max(240, height - SIGN_H - 16);
-    let rows = Math.max(3, Math.min(8, Math.floor(avail / 150)));
-    let ph = Math.floor(avail / rows) - LEDGE - HEADROOM;
-    ph = Math.max(84, Math.min(165, ph));
-    return { rows, ph, pw: Math.round((ph * 2) / 3), rowH: ph + LEDGE + HEADROOM };
+    const avail = Math.max(260, height - HEAD - 6);
+    const rows = Math.max(3, Math.min(7, Math.floor(avail / 165)));
+    const rowH = Math.floor(avail / rows);
+    const ph = Math.max(78, Math.min(170, rowH - LIP - HEADROOM));
+    return { rows, rowH, ph, pw: Math.round((ph * 2) / 3) };
   }
 
-  function buildAisle(hall) {
-    const film = (i) => stock.films[i];
-    const sections = [...SHELVES]
-      .sort((a, b) => collator.compare(fileKey(a.name), fileKey(b.name)))
-      .concat(EVERYTHING)
-      .map((s) => ({ ...s, items: (stock.shelves[s.id] || []).map(film).sort(byTitle) }))
-      .filter((s) => s.items.length);
-    const endcap = stock.front && stock.front.length ? { id: "front", name: "Popular This Week", endcap: true, items: stock.front.slice(0, 12) } : null;
+  // Lay shelves into rows: the first `rows` shelves take one row each, top
+  // down; each later one starts to the right of whichever row ends first.
+  function packRows(shelves, rows, g) {
+    const lines = Array.from({ length: rows }, () => ({ width: 0, runs: [] }));
+    const len = (n) => n * g.pw + (n - 1) * GAP;
+    shelves.forEach((s, n) => {
+      const line = n < rows ? lines[n] : lines.reduce((a, b) => (b.width < a.width ? b : a));
+      if (line.runs.length) line.width += DIVIDER;
+      line.runs.push(s);
+      line.width += len(s.items.length);
+    });
+    return lines;
+  }
 
+  function aisleHTML(a, g, n) {
+    const lines = a.lines;
+    const inner = Math.max(...lines.map((l) => l.width), g.pw * 3);
+    const width = inner + PAD * 2;
+    const tagEvery = Math.max(5, Math.round(TAG_EVERY / (g.pw + GAP)));
+    const woods = [];
+    for (let x = PAD + 10; x < width - 200 || !woods.length; x += WOOD_EVERY) woods.push(x);
+    return (
+      `<section class="lbs-aisle${a.endcap ? " -endcap" : ""}" data-aisle="${a.id}" style="width:${width}px">` +
+      `<div class="lbs-head">` +
+      woods
+        .map((x, k) => `<div class="lbs-wood" style="left:${x}px;--tilt:${[-0.6, 0.5, -0.3, 0.7][(n + k) % 4]}deg"><i></i><b>${esc(a.name)}</b><i></i></div>`)
+        .join("") +
+      `</div>` +
+      lines
+        .map(
+          (line) =>
+            `<div class="lbs-shelf">` +
+            line.runs
+              .map(
+                (run) =>
+                  `<ul class="lbs-run" data-shelf="${esc(run.id)}">` +
+                  run.items
+                    .map((film, k) => posterHTML(film, k === 0 || (k % tagEvery === 0 && run.items.length - k >= 3) ? run.name : ""))
+                    .join("") +
+                  `</ul>`
+              )
+              .join("") +
+            `</div>`
+        )
+        .join("") +
+      `</section>`
+    );
+  }
+
+  function buildWing(hall) {
     hall.innerHTML =
       `<div class="lbs-walk">` +
       `<button type="button" class="lbs-step -back" data-act="back" aria-label="Walk back">${ICON_LEFT}</button>` +
-      `<div class="lbs-track" tabindex="0" aria-label="Horror aisle. Scroll or use the arrow keys to walk."><div class="lbs-wall"></div></div>` +
+      `<div class="lbs-track" tabindex="0" aria-label="Horror wing. Scroll or use the arrow keys to walk."><div class="lbs-wall"></div></div>` +
       `<button type="button" class="lbs-step -on" data-act="on" aria-label="Walk on">${ICON_RIGHT}</button>` +
       `</div>` +
       `<footer class="lbs-floor"><div class="lbs-map"></div><div class="lbs-you"></div></footer>`;
@@ -360,40 +468,43 @@
     const track = $(".lbs-track", hall);
     const wall = $(".lbs-wall", hall);
     watchFrom(track);
-    const g = geometry(track.clientHeight || window.innerHeight - 160);
+    const g = geometry(track.clientHeight || window.innerHeight - 100);
     root.style.setProperty("--ph", `${g.ph}px`);
     root.style.setProperty("--pw", `${g.pw}px`);
     root.style.setProperty("--row", `${g.rowH}px`);
-    root.style.setProperty("--rows", g.rows);
-    root.style.setProperty("--sign", `${SIGN_H}px`);
-    root.style.setProperty("--ledge", `${LEDGE}px`);
+    root.style.setProperty("--head", `${HEAD}px`);
+    root.style.setProperty("--lip", `${LIP}px`);
+    root.style.setProperty("--gap", `${GAP}px`);
+    root.style.setProperty("--divider", `${DIVIDER}px`);
+    root.style.setProperty("--pad", `${PAD}px`);
 
-    const all = endcap ? [endcap, ...sections] : sections;
-    wall.innerHTML = all
-      .map((s, n) => {
-        const tilt = [-1.2, 0.8, -0.5, 1.1, -0.9, 0.4][n % 6];
-        const range = s.endcap ? "face-out, may repeat" : `${letterOf(s.items[0][1])}–${letterOf(s.items.at(-1)[1])}`;
-        return (
-          `<section class="lbs-bay${s.endcap ? " -endcap" : ""}" data-shelf="${s.id}">` +
-          `<div class="lbs-signpost"><div class="lbs-sign" style="--tilt:${tilt}deg">` +
-          `<i class="lbs-tape -l"></i><i class="lbs-tape -r"></i>` +
-          `<b>${esc(s.name)}</b><small>${s.endcap ? range : `${fmt(s.items.length)} films · ${range}`}</small>` +
-          `</div></div>` +
-          `<ul class="lbs-shelves">${s.items.map(posterHTML).join("")}</ul>` +
-          `</section>`
-        );
-      })
-      .join("");
+    const tagSets = Object.entries(stock.tags || {}).map(([t, list]) => [t, new Set(list)]);
+    const aisles = [...AISLES]
+      .sort((a, b) => collator.compare(fileKey(a.name), fileKey(b.name)))
+      .concat(EVERYTHING)
+      .map((a) => ({ ...a, shelves: shelvesFor(a, stock.aisles[a.id] || [], tagSets) }))
+      .filter((a) => a.shelves.length);
+    aisles.forEach((a) => (a.lines = packRows(a.shelves, g.rows, g)));
 
+    // The end cap at the head of the wing: this week's popular, face-out.
+    if (stock.front && stock.front.length) {
+      const per = Math.ceil(stock.front.length / g.rows);
+      const lines = Array.from({ length: g.rows }, (_, r) => {
+        const items = stock.front.slice(r * per, r * per + per);
+        return { width: items.length ? items.length * g.pw + (items.length - 1) * GAP : 0, runs: items.length ? [{ id: "front", name: "This Week", items }] : [] };
+      });
+      aisles.unshift({ id: "front", name: "Popular This Week", endcap: true, lines });
+    }
+
+    wall.innerHTML = aisles.map((a, n) => aisleHTML(a, g, n)).join("");
     wall.querySelectorAll(".lbs-item:not(.lbs-loaded)").forEach((li) => (io ? io.observe(li) : fillPoster(li)));
 
-    // Floor guide: every section along the aisle, to scale. Click to walk there.
-    const bays = [...wall.children];
-    const width = wall.scrollWidth;
-    $(".lbs-map", hall).innerHTML = bays
-      .map((b, n) => `<button type="button" data-act="goto" data-n="${n}" style="flex-grow:${b.offsetWidth}" title="${esc(all[n].name)}"><span>${esc(all[n].name)}</span></button>`)
+    // Floor guide: every aisle, to scale. Click to walk there.
+    const els = [...wall.children];
+    $(".lbs-map", hall).innerHTML = els
+      .map((el, n) => `<button type="button" data-act="goto" data-n="${n}" style="flex-grow:${el.offsetWidth}" title="${esc(aisles[n].name)}"><span>${esc(aisles[n].name)}</span></button>`)
       .join("");
-    aisle = { track, wall, bays, width, all };
+    walkway = { track, els, aisles };
     track.addEventListener("scroll", onWalk, { passive: true });
     track.addEventListener("wheel", onWheel, { passive: false });
     track.addEventListener("keydown", onKey);
@@ -401,25 +512,25 @@
     track.focus({ preventScroll: true });
   }
 
-  // Scrolling is walking: a vertical wheel moves you along the aisle.
+  // Scrolling is walking: a vertical wheel moves you along the wing.
   function onWheel(e) {
-    if (!aisle) return;
+    if (!walkway) return;
     const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     if (!d) return;
     e.preventDefault();
-    aisle.track.scrollLeft += d * (e.deltaMode === 1 ? 40 : 1);
+    walkway.track.scrollLeft += d * (e.deltaMode === 1 ? 40 : 1);
   }
 
   function walk(dir) {
-    const t = aisle.track;
+    const t = walkway.track;
     t.scrollBy({ left: dir * Math.max(t.clientWidth * 0.8, 300), behavior: "smooth" });
   }
 
   function onKey(e) {
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); walk(1); }
     else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); walk(-1); }
-    else if (e.key === "Home") { e.preventDefault(); aisle.track.scrollTo({ left: 0, behavior: "smooth" }); }
-    else if (e.key === "End") { e.preventDefault(); aisle.track.scrollTo({ left: aisle.track.scrollWidth, behavior: "smooth" }); }
+    else if (e.key === "Home") { e.preventDefault(); walkway.track.scrollTo({ left: 0, behavior: "smooth" }); }
+    else if (e.key === "End") { e.preventDefault(); walkway.track.scrollTo({ left: walkway.track.scrollWidth, behavior: "smooth" }); }
   }
 
   let walkFrame = 0;
@@ -427,8 +538,8 @@
     if (walkFrame) return;
     walkFrame = requestAnimationFrame(() => {
       walkFrame = 0;
-      if (!aisle) return;
-      const t = aisle.track;
+      if (!walkway) return;
+      const t = walkway.track;
       const w = t.scrollWidth || 1;
       const you = $(".lbs-you", root);
       if (you) {
@@ -437,46 +548,40 @@
       }
       $(".lbs-step.-back", root).hidden = t.scrollLeft < 4;
       $(".lbs-step.-on", root).hidden = t.scrollLeft + t.clientWidth >= t.scrollWidth - 4;
-      // Light up the section(s) you're standing in.
       const mid = t.scrollLeft + t.clientWidth / 2;
       const btns = root.querySelectorAll(".lbs-map button");
-      aisle.bays.forEach((b, n) => btns[n] && btns[n].classList.toggle("-here", b.offsetLeft <= mid && mid < b.offsetLeft + b.offsetWidth));
+      walkway.els.forEach((el, n) => btns[n] && btns[n].classList.toggle("-here", el.offsetLeft <= mid && mid < el.offsetLeft + el.offsetWidth));
     });
   }
 
   let resizeTimer = 0;
   window.addEventListener("resize", () => {
-    if (!root || root.hidden || !aisle) return;
+    if (!root || root.hidden || !walkway) return;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      const at = aisle.track.scrollLeft / (aisle.track.scrollWidth || 1);
-      buildAisle($(".lbs-hall", root));
-      aisle.track.scrollLeft = at * aisle.track.scrollWidth;
+      const at = walkway.track.scrollLeft / (walkway.track.scrollWidth || 1);
+      buildWing($(".lbs-hall", root));
+      walkway.track.scrollLeft = at * walkway.track.scrollWidth;
     }, 200);
   });
 
   function onClick(e) {
-    const btn = e.target.closest("[data-act], [data-wing]");
+    const btn = e.target.closest("[data-act], [data-coll]");
     if (!btn || !root.contains(btn)) return;
     const act = btn.dataset.act;
-    if (btn.dataset.wing) {
+    if (btn.dataset.coll) {
       if (btn.getAttribute("aria-disabled") === "true") return;
-      wing = btn.dataset.wing;
+      collection = btn.dataset.coll;
       return render();
     }
     if (act === "close") return leaveStore();
     if (act === "retry") return render();
-    if (act === "restock") {
-      try { localStorage.removeItem(CACHE_KEY); } catch {}
-      stock = null;
-      return render();
-    }
-    if (!aisle) return;
+    if (!walkway) return;
     if (act === "back") walk(-1);
     else if (act === "on") walk(1);
     else if (act === "goto") {
-      const bay = aisle.bays[+btn.dataset.n];
-      if (bay) aisle.track.scrollTo({ left: Math.max(0, bay.offsetLeft - 24), behavior: "smooth" });
+      const el = walkway.els[+btn.dataset.n];
+      if (el) walkway.track.scrollTo({ left: Math.max(0, el.offsetLeft - 12), behavior: "smooth" });
     }
   }
 
@@ -521,8 +626,8 @@
     strip.innerHTML =
       `<a class="lbs-home-door" href="#store">` +
       `<span class="lbs-home-kicker">letternøxd video store</span>` +
-      `<span class="lbs-home-title">The Horror aisle is open</span>` +
-      `<span class="lbs-home-sub">${SHELVES.length + 1} sections, every film in one place, A to Z. Walk in →</span>` +
+      `<span class="lbs-home-title">The Horror wing is open</span>` +
+      `<span class="lbs-home-sub">${AISLES.length + 1} aisles, every film on one shelf, A to Z. Walk in →</span>` +
       `</a>`;
     strip.querySelector("a").addEventListener("click", enterStore);
     // Just under "Welcome back…", above your friends' activity.

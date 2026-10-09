@@ -50,34 +50,36 @@ html.lbs-open {
   text-transform: uppercase;
   margin-left: 4px;
 }
-/* The overhead aisle marker */
-.lbs-aisle-sign {
+/* The wing's name, like the big sign over a department */
+.lbs-wing-sign {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 8px;
   padding: 5px 14px;
   border-radius: 3px;
   background: #222b34;
   box-shadow: 0 0 0 1px #384350 inset;
 }
-.lbs-aisle-sign b {
+.lbs-wing-sign b {
   color: #fff;
   font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
-.lbs-aisle-sign span {
-  font-size: 12px;
+.lbs-wing-sign span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: #789;
-  white-space: nowrap;
 }
-.lbs-wings {
+.lbs-collections {
   display: flex;
   gap: 4px;
   margin-left: auto;
 }
-.lbs-wing {
+.lbs-coll {
   all: unset;
   display: inline-flex;
   align-items: baseline;
@@ -90,27 +92,27 @@ html.lbs-open {
   cursor: pointer;
   white-space: nowrap;
 }
-.lbs-wing span {
+.lbs-coll span {
   color: #678;
   font-size: 11px;
   font-weight: 400;
 }
-.lbs-wing:hover {
+.lbs-coll:hover {
   color: #def;
 }
-.lbs-wing.-on {
+.lbs-coll.-on {
   background: #2c3440;
   color: #fff;
 }
-.lbs-wing.-on span {
+.lbs-coll.-on span {
   color: #9ab;
 }
-.lbs-wing.-soon,
-.lbs-wing.-soon:hover {
+.lbs-coll.-soon,
+.lbs-coll.-soon:hover {
   cursor: default;
   color: #567;
 }
-.lbs-wing em {
+.lbs-coll em {
   font-style: normal;
   font-size: 9.5px;
   font-weight: 700;
@@ -203,131 +205,172 @@ html.lbs-open {
   background-position: 9px 9px;
 }
 
-/* One section of shelving */
-.lbs-bay {
+/* One aisle of shelving */
+.lbs-aisle {
   position: relative;
   flex: none;
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 0 30px;
   box-shadow: inset 0 -40px 40px -30px rgba(0, 0, 0, 0.5);
 }
-/* Uprights between sections */
-.lbs-bay::before,
-.lbs-bay:last-child::after {
+/* Uprights between aisles */
+.lbs-aisle::before,
+.lbs-aisle:last-child::after {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
   left: -6px;
-  z-index: 1;
+  z-index: 2;
   width: 12px;
   background: linear-gradient(90deg, #12161a 0%, #3b4652 35%, #2a333d 65%, #101418 100%);
   box-shadow: 4px 0 10px rgba(0, 0, 0, 0.45), -4px 0 10px rgba(0, 0, 0, 0.45);
 }
-.lbs-bay:first-child::before {
+.lbs-aisle:first-child::before {
   left: 0;
 }
-.lbs-bay:last-child::after {
+.lbs-aisle:last-child::after {
   left: auto;
   right: 0;
 }
 
-/* Laminated signs */
-.lbs-signpost {
+/* The aisle's wooden sign, repeating along the top */
+.lbs-head {
+  position: relative;
   flex: none;
-  height: var(--sign);
-  padding-top: 12px;
-  box-sizing: border-box;
+  height: var(--head);
 }
-.lbs-sign {
-  position: sticky;
-  left: 44px;
+.lbs-wood {
+  position: absolute;
+  top: 12px;
   display: inline-flex;
-  flex-direction: column;
-  gap: 1px;
-  max-width: 260px;
-  padding: 7px 16px 6px;
-  border-radius: 5px;
-  background-color: #f2eee3;
-  background-image: linear-gradient(
-    112deg,
-    rgba(255, 255, 255, 0.7) 0%,
-    rgba(255, 255, 255, 0) 32%,
-    rgba(255, 255, 255, 0) 58%,
-    rgba(255, 255, 255, 0.35) 70%,
-    rgba(255, 255, 255, 0) 84%
-  );
-  color: #14181c;
-  transform: rotate(var(--tilt, 0deg));
-  /* the clear laminate border, then the drop shadow on the pegboard */
+  align-items: center;
+  gap: 12px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 4px;
+  background-color: #8c5b30;
+  background-image:
+    repeating-linear-gradient(
+      178deg,
+      rgba(255, 214, 160, 0.09) 0px,
+      rgba(255, 214, 160, 0.09) 1px,
+      transparent 1px,
+      transparent 5px,
+      rgba(60, 30, 10, 0.12) 5px,
+      rgba(60, 30, 10, 0.12) 6px,
+      transparent 6px,
+      transparent 11px
+    ),
+    linear-gradient(180deg, #a06a39 0%, #8a582d 55%, #74481f 100%);
   box-shadow:
-    0 0 0 4px rgba(225, 232, 238, 0.16),
-    0 0 0 5px rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 220, 170, 0.35),
+    inset 0 -2px 0 rgba(40, 20, 5, 0.35),
     0 7px 14px rgba(0, 0, 0, 0.55);
+  transform: rotate(var(--tilt, 0deg));
+  white-space: nowrap;
 }
-.lbs-sign b {
+.lbs-wood b {
+  color: #fbeed6;
   font-size: 15px;
   font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  white-space: nowrap;
+  text-shadow: 0 -1px 0 rgba(40, 18, 4, 0.6), 0 1px 0 rgba(255, 220, 170, 0.15);
 }
-.lbs-sign small {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: #5d6873;
-  white-space: nowrap;
-}
-.lbs-tape {
-  position: absolute;
-  top: -7px;
-  width: 34px;
-  height: 14px;
-  background: rgba(250, 246, 228, 0.42);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-}
-.lbs-tape.-l {
-  left: 8px;
-  transform: rotate(-9deg);
-}
-.lbs-tape.-r {
-  right: 8px;
-  transform: rotate(7deg);
+/* screws */
+.lbs-wood i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e9e4da 0, #9b9283 45%, #4d463c 100%);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
-/* The shelves: films fill top to bottom, then step right, A to Z */
-.lbs-shelves {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(var(--rows), var(--row));
-  grid-auto-columns: var(--pw);
-  column-gap: 8px;
-  margin: 0 -30px;
-  padding: 0 30px;
-  list-style: none;
-  /* a board under every row */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(var(--row) - var(--ledge)),
-    #4c5764 calc(var(--row) - var(--ledge)),
-    #4c5764 calc(var(--row) - var(--ledge) + 2px),
-    #2b333d calc(var(--row) - var(--ledge) + 2px),
-    #222931 calc(var(--row) - 2px),
-    #0c0f12 calc(var(--row) - 2px),
-    #0c0f12 var(--row)
-  );
-}
-.lbs-item {
+/* A shelf: one row, its board running the full length of the aisle */
+.lbs-shelf {
+  position: relative;
   display: flex;
   align-items: flex-end;
   height: var(--row);
-  padding-bottom: var(--ledge);
+  padding: 0 var(--pad);
+  box-sizing: border-box;
+  background-image: linear-gradient(
+    to bottom,
+    transparent calc(100% - var(--lip)),
+    #55606d calc(100% - var(--lip)),
+    #55606d calc(100% - var(--lip) + 2px),
+    #353e49 calc(100% - var(--lip) + 2px),
+    #272f38 calc(100% - 3px),
+    #0b0e11 calc(100% - 3px)
+  );
+}
+.lbs-run {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* where one subcategory ends and the next begins: a clear shelf divider */
+.lbs-run + .lbs-run {
+  margin-left: var(--divider);
+}
+.lbs-run + .lbs-run::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--divider) / -2 - 2px);
+  bottom: var(--lip);
+  width: 4px;
+  height: calc(var(--ph) * 0.8);
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(90deg, rgba(210, 228, 240, 0.28), rgba(210, 228, 240, 0.12));
+  box-shadow: 0 0 0 1px rgba(210, 228, 240, 0.12);
+}
+.lbs-item {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  height: var(--row);
+  padding-bottom: var(--lip);
   box-sizing: border-box;
 }
+
+/* Taped laminated tags on the shelf edge */
+.lbs-tag {
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  z-index: 1;
+  height: 17px;
+  padding: 0 8px;
+  border-radius: 2px;
+  background-color: #f2eee3;
+  background-image: linear-gradient(115deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.3) 72%, rgba(255, 255, 255, 0) 86%);
+  box-shadow: 0 0 0 2px rgba(225, 232, 238, 0.18), 0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #14181c;
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 17px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.lbs-tag i {
+  position: absolute;
+  top: -4px;
+  left: -6px;
+  width: 22px;
+  height: 9px;
+  background: rgba(250, 246, 228, 0.45);
+  transform: rotate(-24deg);
+}
+
 /* Posters use Letterboxd's own .poster/.frame styles for the frame and hover. */
 .lbs-poster {
   position: relative;
@@ -353,16 +396,18 @@ html.lbs-open {
   opacity: 0.3;
 }
 
-/* End cap: the lit display at the head of the aisle */
-.lbs-bay.-endcap {
+/* End cap at the head of the wing */
+.lbs-aisle.-endcap {
   background: linear-gradient(#1d2730, #151b21);
   box-shadow: inset 0 60px 80px -40px rgba(64, 188, 244, 0.12);
 }
-.lbs-bay.-endcap .lbs-sign {
-  background-color: #ffd447;
+.lbs-aisle.-endcap .lbs-wood {
+  background-color: #c79a1c;
+  background-image: linear-gradient(180deg, #ffd85a 0%, #e9b923 100%);
 }
-.lbs-bay.-endcap .lbs-sign small {
-  color: #6b5a14;
+.lbs-aisle.-endcap .lbs-wood b {
+  color: #2a1d00;
+  text-shadow: 0 1px 0 rgba(255, 245, 200, 0.5);
 }
 
 /* Walk buttons */
@@ -493,9 +538,9 @@ html.lbs-open {
     padding: 0 12px;
   }
   .lbs-brand span,
-  .lbs-aisle-sign span,
-  .lbs-wing span,
-  .lbs-wing em {
+  .lbs-wing-sign span,
+  .lbs-coll span,
+  .lbs-coll em {
     display: none;
   }
 }
