@@ -731,3 +731,8 @@ li.lbni-tinted.lbni-pinned:not(:has(:focus-visible)) > .lbni-ind {
 .lbni-badges > .lbni-look-starcolor .lbni-num {
   color: #14181c;
 }
+
+/* 3½: a hair of space before the ½ (the badge text is tightly tracked). */
+.lbni-half {
+  margin-left: 0.14em;
+}

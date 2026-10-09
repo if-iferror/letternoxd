@@ -74,7 +74,7 @@
   // "starcolor" (solid green / orange, dark number).
   const RATING_LOOKS = ["plain", "star", "half", "instar", "stardark", "starcolor"];
   const IN_STAR = ["instar", "stardark", "starcolor"];
-  if (!RATING_LOOKS.includes(prefs.ratingLook)) prefs.ratingLook = "plain";
+  if (!RATING_LOOKS.includes(prefs.ratingLook)) prefs.ratingLook = "half";
   const savePrefs = () => writeJSON(PREFS_KEY, prefs);
 
   let USER = null; // set once the page is ready
@@ -551,7 +551,12 @@
   // A rating as text, in the chosen look: 3.5 / 3½.
   const ratingLabel = (rating, look) => {
     if (!(rating > 0)) return "";
-    if (look === "half" || look === "stardark" || look === "starcolor") return rating % 1 ? `${Math.floor(rating) || ""}½` : String(rating);
+    if (look === "half" || look === "stardark" || look === "starcolor") {
+      if (!(rating % 1)) return String(rating);
+      const whole = Math.floor(rating);
+      // A hair of space between the whole number and the ½.
+      return whole ? `${whole}<span class="${NS}-half">½</span>` : "½";
+    }
     return String(rating % 1 ? rating.toFixed(1) : rating);
   };
   // One badge's markup. "num-seen" / "num-loved" show the rating number;
