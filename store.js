@@ -245,6 +245,9 @@
     ["thriller", "Thriller"], ["tv-movie", "TV Movie"], ["war", "War"], ["western", "Western"],
   ];
   const STOCKED = "horror";
+  // For now the Store opens straight into the Sorting Desk; the walkable
+  // aisles are switched off (set false to bring them back).
+  const DESK_ONLY = true;
 
   // Your own moves and folders ("Mine"). Kept in this browser only.
   const MINE_KEY = `${NS}:store:mine:v1`;
@@ -485,8 +488,10 @@
     root.innerHTML =
       `<header class="lbs-top">` +
       `<div class="lbs-brand">letternøxd <span>video store</span></div>` +
-      `<div class="lbs-wing-sign"><b>Horror</b><span>wing</span></div>` +
-      `<nav class="lbs-collections" aria-label="Collections">` +
+      (DESK_ONLY
+        ? `<div class="lbs-wing-sign"><b>Sorting desk</b></div>`
+        : `<div class="lbs-wing-sign"><b>Horror</b><span>wing</span></div>`) +
+      `<nav class="lbs-collections" aria-label="Collections"${DESK_ONLY ? " hidden" : ""}>` +
       COLLECTIONS.map((c) =>
         `<button type="button" class="lbs-coll${c.id === collection ? " -on" : ""}${c.open ? "" : " -soon"}" data-coll="${c.id}"${c.open ? "" : ' aria-disabled="true"'}>` +
         `${c.name} <span>${fmt(c.id === "main" ? total : c.count)}</span>${c.open ? "" : "<em>soon</em>"}</button>`
@@ -497,6 +502,17 @@
       `<div class="lbs-hall"></div>`;
 
     const hall = $(".lbs-hall", root);
+    if (stock && DESK_ONLY) {
+      buildLibrary();
+      root.classList.add("lbs-desk-only");
+      hall.innerHTML = deskHTML();
+      desk.open = true;
+      if (!desk.folder) desk.folder = desk.col = STOCKED;
+      $(".lbs-drawer", root).hidden = false;
+      renderDesk();
+      $(".lbs-fq", root)?.focus();
+      return;
+    }
     if (stock) {
       buildLibrary();
       hall.innerHTML =
@@ -508,7 +524,7 @@
       return;
     }
 
-    const box = h("div", "lbs-loading", `<div class="lbs-meter"><i></i></div><p>Stocking the shelves: reading Horror's top ${fmt(COLLECTIONS[0].count)} films from Letterboxd and sorting them into aisles and shelves. This happens once a week and takes about a minute.</p>`);
+    const box = h("div", "lbs-loading", `<div class="lbs-meter"><i></i></div><p>Stocking the shelves: reading Horror's top ${fmt(COLLECTIONS[0].count)} films from Letterboxd and sorting them into categories. This happens once a week and takes about a minute.</p>`);
     hall.append(box);
     buildStock((f) => {
       const i = $(".lbs-meter i", root);
@@ -1002,7 +1018,7 @@
     buildLibrary();
     desk.moving = null;
     desk.selected.clear();
-    buildWing();
+    if (!DESK_ONLY) buildWing();
     renderDesk();
   }
 
@@ -1044,7 +1060,7 @@
     }
     root.classList.add("lbs-dragging");
     // Picking a film up off the shelf slides the desk open.
-    if (!desk.open) setTimeout(() => setDesk(true), 0);
+    if (!desk.open && !DESK_ONLY) setTimeout(() => setDesk(true), 0);
   }
 
   function onDragEnd() {
@@ -1262,8 +1278,9 @@
     strip.innerHTML =
       `<a class="lbs-home-door" href="#store">` +
       `<span class="lbs-home-kicker">letternøxd video store</span>` +
-      `<span class="lbs-home-title">The Horror wing is open</span>` +
-      `<span class="lbs-home-sub">${AISLES.length + 1} aisles, every film on one shelf, A to Z. Walk in →</span>` +
+      (DESK_ONLY
+        ? `<span class="lbs-home-title">The Sorting Desk is open</span><span class="lbs-home-sub">File films into genres, categories and subcategories. Start with Horror →</span>`
+        : `<span class="lbs-home-title">The Horror wing is open</span><span class="lbs-home-sub">${AISLES.length + 1} aisles, every film on one shelf, A to Z. Walk in →</span>`) +
       `</a>`;
     strip.querySelector("a").addEventListener("click", enterStore);
     // Just under "Welcome back…", above your friends' activity.
@@ -1283,7 +1300,7 @@
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || !root || root.hidden) return;
     if (desk.moving) { desk.moving = null; return renderDesk(); }
-    if (desk.open) return setDesk(false);
+    if (desk.open && !DESK_ONLY) return setDesk(false);
     leaveStore();
   });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

@@ -74,6 +74,9 @@ html.lbs-open {
   text-transform: uppercase;
   color: #789;
 }
+.lbs-collections[hidden] {
+  display: none;
+}
 .lbs-collections {
   display: flex;
   gap: 4px;
@@ -534,6 +537,32 @@ html.lbs-open {
 
 
 /* ---------- the sorting desk ---------- */
+/* Desk only: the desk fills the store */
+.lbs-root.lbs-desk-only .lbs-drawer {
+  top: 0;
+  bottom: var(--deskbar, 40px);
+  height: auto;
+  border-top: 0;
+  box-shadow: none;
+  animation: none;
+}
+.lbs-root.lbs-desk-only .lbs-desk-toggle {
+  display: none;
+}
+.lbs-root.lbs-desk-only .lbs-deskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.lbs-root.lbs-desk-only .lbs-toast,
+.lbs-root.lbs-desk-only.lbs-desk-open .lbs-toast {
+  bottom: calc(var(--deskbar, 40px) + 16px);
+}
+.lbs-root.lbs-desk-only .lbs-films,
+.lbs-root.lbs-desk-only .lbs-folders {
+  padding: 18px 20px 14px;
+}
 .lbs-deskbar {
   display: flex;
   align-items: center;
@@ -1100,4 +1129,8 @@ html.lbs-open {
   .lbs-coll em {
     display: none;
   }
+}
+
+.lbs-collections[hidden] + .lbs-close {
+  margin-left: auto;
 }
