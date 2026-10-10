@@ -671,6 +671,13 @@
 
   let walkFrame = 0;
   let standingIn = null; // the aisle in the middle of the view
+  function aisleHere() {
+    if (!walkway) return null;
+    const t = walkway.track;
+    const mid = t.scrollLeft + t.clientWidth / 2;
+    const n = walkway.els.findIndex((el) => el.offsetLeft <= mid && mid < el.offsetLeft + el.offsetWidth);
+    return n >= 0 && !walkway.aisles[n].endcap ? walkway.aisles[n].id : null;
+  }
   function onWalk() {
     if (walkFrame) return;
     walkFrame = requestAnimationFrame(() => {
@@ -760,7 +767,7 @@
     if (open) {
       d.hidden = false;
       if (!desk.folder) {
-        desk.folder = standingIn || STOCKED;
+        desk.folder = aisleHere() || STOCKED;
         desk.col = desk.folder;
       }
       renderDesk();
@@ -784,7 +791,7 @@
   function renderDeskBar() {
     const bar = $(".lbs-deskbar-path", root);
     if (!bar) return;
-    const here = desk.open ? desk.folder : standingIn;
+    const here = desk.open ? desk.folder : aisleHere();
     bar.innerHTML = here
       ? `${pathHTML(here, "open")}<span class="lbs-hint">${desk.open ? "" : "· drag any film here to re-file it"}</span>`
       : `<span class="lbs-hint">Drag any film here to re-file it</span>`;

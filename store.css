@@ -669,6 +669,9 @@ html.lbs-open {
   border-left: 1px solid #2c3440;
   background: #171c21;
 }
+.lbs-folders > .lbs-search {
+  flex: none;
+}
 .lbs-films-top {
   display: flex;
   gap: 8px;
